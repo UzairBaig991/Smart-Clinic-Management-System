@@ -1295,3 +1295,601 @@ function renderAppointmentCancelScreen() {
           </div>
 
           <div class="field-group">
+            <label for="cancel-reason">Cancellation reason *</label>
+            <input id="cancel-reason" class="field-input" type="text" value="Patient unavailable" />
+          </div>
+          <div class="field-group">
+            <label for="cancel-note">Additional note</label>
+            <input id="cancel-note" class="field-input" type="text" placeholder="Optional note..." />
+          </div>
+          <p style="font-size:11px;color:var(--muted);">No cancellation fee will be charged.</p>
+
+          <button type="button" class="btn-danger btn-full" id="confirm-cancel-appt-btn" data-aid="${selected.id}">
+            Cancel appointment
+          </button>
+          <button type="button" class="btn-secondary btn-full" id="keep-appt-btn">Keep appointment</button>
+          <span style="font-size:10px;color:var(--muted);">Nothing changes until you confirm.</span>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 08 Â· DOCTOR APPOINTMENTS
+// ============================================================
+
+function renderDoctorAppointmentsScreen() {
+  const { doctors, appointments, medicalRecords } = state.data;
+  const doc = getDoctor(state.activeDoctorId) || doctors[0] || null;
+  if (doc) state.activeDoctorId = doc.id;
+
+  const docAppts = doc ? appointments.filter(a => a.doctorId === doc.id) : [];
+  const completed = docAppts.filter(a => a.status === 'Completed').length;
+  const remaining = docAppts.length - completed;
+  const cancelledForDoc = doc
+    ? state.data.cancelledAppointments.filter(a => a.doctorId === doc.id).length
+    : 0;
+
+  let selected = docAppts.find(a => a.id === state.selectedDocApptId) || docAppts[0] || null;
+  if (selected) state.selectedDocApptId = selected.id;
+
+  const selPatient = selected ? getPatient(selected.patientId) : null;
+  const lastRec = selPatient
+    ? [...medicalRecords].reverse().find(r => r.patientId === selPatient.id)
+    : null;
+
+  return `
+    <div class="doctor-summary-strip">
+      <div class="doctor-greeting-card">
+        <div>
+          <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Good day, Dr. ${esc(doc ? doc.name : 'Doctor')}</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:6px;">
+            ${doc ? `${esc(doc.specialization)} Â· ${esc(doc.qualification)} Â· ID #${doc.id}` : 'No doctor selected'}
+          </p>
+        </div>
+        ${doctors.length > 1 ? `
+          <select id="active-doctor-select" class="field-select" style="width:220px;height:40px;">
+            ${doctors.map(d => `<option value="${d.id}" ${doc && d.id === doc.id ? 'selected' : ''}>Dr. ${esc(d.name)} (#${d.id})</option>`).join('')}
+          </select>
+        ` : ''}
+      </div>
+      <div class="doctor-metric-card"><strong>${docAppts.length}</strong><span>scheduled</span></div>
+      <div class="doctor-metric-card"><strong>${completed}</strong><span>completed</span></div>
+      <div class="doctor-metric-card"><strong>${remaining}</strong><span>remaining</span></div>
+      <div class="doctor-metric-card"><strong>${cancelledForDoc}</strong><span>cancelled</span></div>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Doctorâ€™s appointments</h3>
+          <button class="btn-secondary" id="view-doc-profile-btn" style="height:38px;">View my profile</button>
+        </div>
+
+        ${docAppts.length === 0 ? `<div class="empty-state">No appointments found for Dr. ${esc(doc?.name || '')}.</div>` : docAppts.map(a => {
+          const p = getPatient(a.patientId);
+          const isSel = selected && selected.id === a.id;
+          const pillClass = a.status === 'Completed' ? 'pill-green' : a.status === 'Checked in' ? 'pill-amber' : 'pill-green';
+          return `
+            <div class="visit-row ${isSel ? 'selected' : ''}" data-select-doc-appt="${a.id}">
+              <div style="width:95px;">
+                <div style="font-size:12px;font-weight:500;color:var(--muted);">${esc(a.time)}</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:3px;">${esc(formatPrettyDate(a.date))}</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:500;">${esc(p ? p.name : 'Patient #' + a.patientId)}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">${esc(a.reason)}</div>
+              </div>
+              <span class="pill ${pillClass}">${esc(a.status)}</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:18px;">
+        ${!selected || !selPatient ? `<div class="empty-state">Select an appointment to review patient details and start a consultation.</div>` : `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:10px;font-weight:600;color:var(--primary);letter-spacing:0.6px;">READY FOR CONSULTATION</span>
+            <span style="font-size:11px;color:var(--muted);">${esc(selected.time)}</span>
+          </div>
+          <div>
+            <h2 style="font-size:24px;font-weight:600;color:var(--ink);">${esc(selPatient.name)}</h2>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selPatient.id} Â· ${esc(selPatient.gender)}, ${selPatient.age} years Â· ${esc(selPatient.phone)}</p>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">REASON FOR VISIT</div>
+            <div style="font-size:15px;font-weight:500;margin-top:6px;">${esc(selected.reason)}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px;">Scheduled on ${esc(formatPrettyDate(selected.date))}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">LATEST MEDICAL RECORD</div>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">${lastRec ? esc(lastRec.diagnosis) : 'No previous records yet'}</div>
+            ${lastRec ? `<div style="font-size:12px;color:var(--muted);margin-top:3px;">${esc(lastRec.symptoms)}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="btn-secondary" style="flex:1;height:38px;" data-set-status="Checked in" data-aid="${selected.id}">Check in</button>
+            <button type="button" class="btn-secondary" style="flex:1;height:38px;" data-set-status="Completed" data-aid="${selected.id}">Mark complete</button>
+          </div>
+          <button type="button" class="btn-primary btn-full" id="start-consult-btn" data-pid="${selPatient.id}" data-did="${doc.id}">
+            Start consultation â†’
+          </button>
+          <button type="button" class="btn-secondary btn-full" id="doc-view-history-btn" data-pid="${selPatient.id}">
+            View medical history
+          </button>
+          <span style="font-size:10px;color:var(--muted);">Patient records open in your clinical workspace.</span>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 09 Â· MEDICAL RECORD CREATION
+// ============================================================
+
+function renderMedicalRecordScreen() {
+  const { patients, doctors, medicalRecords } = state.data;
+  const p = getPatient(state.recordPatientId) || patients[0] || null;
+  const d = getDoctor(state.recordDoctorId) || doctors[0] || null;
+  if (p) state.recordPatientId = p.id;
+  if (d) state.recordDoctorId = d.id;
+
+  const history = p ? medicalRecords.filter(r => r.patientId === p.id).reverse() : [];
+
+  return `
+    <div class="card" style="padding:16px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:20px;font-weight:600;color:var(--ink);">${esc(p ? p.name : 'Select patient')}</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:5px;">
+            ${p ? `PT-${p.id} Â· ${esc(p.gender)}, ${p.age} years Â· ${esc(p.address)}` : ''}
+          </p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <select id="rec-patient-select" class="field-select" style="width:220px;height:40px;">
+            ${patients.map(pt => `<option value="${pt.id}" ${p && pt.id === p.id ? 'selected' : ''}>${esc(pt.name)} (PT-${pt.id})</option>`).join('')}
+          </select>
+          <select id="rec-doctor-select" class="field-select" style="width:210px;height:40px;">
+            ${doctors.map(dr => `<option value="${dr.id}" ${d && dr.id === d.id ? 'selected' : ''}>Dr. ${esc(dr.name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Clinical notes</h3>
+          <span style="font-size:11px;color:var(--muted);">Attending: Dr. ${esc(d ? d.name : 'â€”')}</span>
+        </div>
+
+        <form id="medical-record-form" style="display:flex;flex-direction:column;gap:16px;">
+          <div class="field-group">
+            <label for="rec-diagnosis">Diagnosis *</label>
+            <input id="rec-diagnosis" class="field-input" type="text" placeholder="e.g. Seasonal allergic rhinitis" required />
+          </div>
+          <div class="field-group">
+            <label for="rec-symptoms">Symptoms &amp; chief complaint *</label>
+            <textarea id="rec-symptoms" class="field-textarea" placeholder="Describe symptoms, onset, and examination findings..." required></textarea>
+          </div>
+          <div class="field-group">
+            <label for="rec-notes">Doctor notes &amp; care plan *</label>
+            <textarea id="rec-notes" class="field-textarea" placeholder="Assessment, treatment guidance, and follow-up plan..." required></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:14px;padding-top:4px;">
+            <button type="submit" class="btn-secondary" data-after="stay" ${(!p || !d) ? 'disabled' : ''}>Save record</button>
+            <button type="submit" class="btn-primary" data-after="rx" ${(!p || !d) ? 'disabled' : ''}>Save &amp; create prescription â†’</button>
+          </div>
+          <span style="font-size:10px;color:var(--muted);">Saving creates a permanent MedicalRecord linked to this patient and doctor.</span>
+        </form>
+      </div>
+
+      <div class="split-right" style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card" style="display:flex;flex-direction:column;gap:14px;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Vitals reference</h3>
+          <div class="form-row-2">
+            <div class="field-group"><label>Blood pressure</label><input class="field-input" value="120/80 mmHg" /></div>
+            <div class="field-group"><label>Heart rate</label><input class="field-input" value="72 bpm" /></div>
+          </div>
+          <div class="form-row-2">
+            <div class="field-group"><label>Temperature</label><input class="field-input" value="36.8 Â°C" /></div>
+            <div class="field-group"><label>Weight</label><input class="field-input" value="68 kg" /></div>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column;gap:16px;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Recent history (${history.length})</h3>
+          ${history.length === 0 ? `<p style="font-size:12px;color:var(--muted);">No medical records recorded for this patient yet.</p>` : history.slice(0, 4).map(r => {
+            const doc = getDoctor(r.doctorId);
+            return `
+              <div style="display:flex;flex-direction:column;gap:5px;padding-bottom:12px;border-bottom:1px solid var(--border-card);">
+                <span style="font-size:11px;font-weight:500;color:var(--primary);">Record #${r.id}</span>
+                <span style="font-size:13px;font-weight:500;color:var(--ink);">${esc(r.diagnosis)}</span>
+                <span style="font-size:11px;color:var(--muted);">${esc(r.symptoms)}</span>
+                <span style="font-size:11px;color:var(--muted);">Dr. ${esc(doc ? doc.name : '#' + r.doctorId)}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 10 Â· PRESCRIPTION CREATION
+// ============================================================
+
+function renderPrescriptionScreen() {
+  const { patients, doctors, prescriptions } = state.data;
+  const p = getPatient(state.rxPatientId) || patients[0] || null;
+  const d = getDoctor(state.rxDoctorId) || doctors[0] || null;
+  if (p) state.rxPatientId = p.id;
+  if (d) state.rxDoctorId = d.id;
+
+  const rx = state.rxDraft;
+  const patientRx = p ? prescriptions.filter(item => item.patientId === p.id).reverse() : [];
+
+  return `
+    <div class="card" style="padding:16px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:20px;font-weight:600;color:var(--ink);">${esc(p ? p.name : 'Select patient')}</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:5px;">
+            ${p ? `PT-${p.id} Â· ${esc(p.gender)}, ${p.age} years Â· ${patientRx.length} issued ${patientRx.length === 1 ? 'prescription' : 'prescriptions'}` : ''}
+          </p>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <select id="rx-patient-select" class="field-select" style="width:220px;height:40px;">
+            ${patients.map(pt => `<option value="${pt.id}" ${p && pt.id === p.id ? 'selected' : ''}>${esc(pt.name)} (PT-${pt.id})</option>`).join('')}
+          </select>
+          <select id="rx-doctor-select" class="field-select" style="width:210px;height:40px;">
+            ${doctors.map(dr => `<option value="${dr.id}" ${d && dr.id === d.id ? 'selected' : ''}>Dr. ${esc(dr.name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:16px;">
+        <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Medication builder</h3>
+
+        <form id="prescription-form" style="display:flex;flex-direction:column;gap:15px;">
+          <div class="field-group">
+            <label for="rx-medicine">Medicine name *</label>
+            <input id="rx-medicine" class="field-input" type="text" value="${esc(rx.medicine)}" placeholder="e.g. Cetirizine 10 mg" required />
+          </div>
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="rx-dosage">Dosage *</label>
+              <input id="rx-dosage" class="field-input" type="text" value="${esc(rx.dosage)}" placeholder="e.g. 1 tablet once daily" required />
+            </div>
+            <div class="field-group">
+              <label for="rx-duration">Duration *</label>
+              <input id="rx-duration" class="field-input" type="text" value="${esc(rx.duration)}" placeholder="e.g. 14 days" required />
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="rx-instructions">Patient instructions *</label>
+            <textarea id="rx-instructions" class="field-textarea" placeholder="Take 1 tablet by mouth each evening." required>${esc(rx.instructions)}</textarea>
+          </div>
+          <div class="field-group">
+            <label for="rx-followup">Follow-up date</label>
+            <input id="rx-followup" class="field-input" type="text" value="${esc(rx.followUp)}" />
+          </div>
+          <label class="checkbox-label">
+            <input id="rx-reviewed" type="checkbox" ${rx.reviewed ? 'checked' : ''} />
+            <span>I have reviewed the patientâ€™s allergies and medication plan.</span>
+          </label>
+          <div style="display:flex;justify-content:flex-end;gap:12px;">
+            <button type="button" class="btn-secondary" onclick="window.print()">Print Rx</button>
+            <button type="submit" class="btn-primary" ${(!p || !d) ? 'disabled' : ''}>Sign prescription</button>
+          </div>
+        </form>
+
+        ${patientRx.length > 0 ? `
+          <div class="divider"></div>
+          <h4 style="font-size:14px;font-weight:600;color:var(--ink);">Issued prescriptions for ${esc(p.name)}</h4>
+          ${patientRx.map(item => `
+            <div style="background:var(--bg-canvas);border-radius:8px;padding:12px 14px;font-size:12px;display:flex;justify-content:space-between;gap:12px;">
+              <div>
+                <strong>#${item.id} Â· ${esc(item.medicine)}</strong>
+                <div style="color:var(--muted);margin-top:3px;">${esc(item.dosage)} Â· ${esc(item.duration)} â€” ${esc(item.instructions)}</div>
+              </div>
+              <span class="pill pill-green">Signed</span>
+            </div>
+          `).join('')}
+        ` : ''}
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:18px;padding:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:24px;font-weight:600;color:var(--primary);">wellnest.</div>
+            <div style="font-size:10px;font-weight:500;color:var(--muted);letter-spacing:1.3px;margin-top:4px;">SMART CLINIC</div>
+          </div>
+          <div style="font-size:38px;font-weight:500;color:#a5bdb1;line-height:1;">Rx</div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--ink);">Dr. ${esc(d ? d.name : 'â€”')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${esc(d ? `${d.specialization} Â· ${d.qualification}` : '')}</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-weight:500;">PRESCRIBED FOR</div>
+          <div style="font-size:18px;font-weight:600;margin-top:6px;">${esc(p ? p.name : 'â€”')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${p ? `${p.age} years Â· ${esc(p.gender)} Â· PT-${p.id}` : ''}</div>
+        </div>
+        <div style="padding:12px 0;">
+          <div style="font-size:16px;font-weight:600;color:var(--ink);" id="rx-prev-med">01 &nbsp;&nbsp;${esc(rx.medicine || 'Medicine')}</div>
+          <div style="font-size:12px;color:var(--ink);margin-top:8px;" id="rx-prev-dose">${esc(rx.dosage || 'â€”')} Â· ${esc(rx.duration || 'â€”')}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;" id="rx-prev-inst">${esc(rx.instructions || 'â€”')}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-weight:500;">FOLLOW-UP</div>
+          <div style="font-size:13px;font-weight:500;margin-top:5px;" id="rx-prev-fu">${esc(rx.followUp || 'â€”')}</div>
+        </div>
+        <div style="padding-top:10px;">
+          <div style="font-size:14px;font-weight:500;color:var(--warn-ink);">Live preview</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Click â€œSign prescriptionâ€ to issue and save to records.</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 11 Â· BILL GENERATION
+// ============================================================
+
+function renderBillGenerateScreen() {
+  const { patients } = state.data;
+  const p = getPatient(state.billPatientId) || patients[0] || null;
+  if (p) state.billPatientId = p.id;
+
+  const cFee = parseFloat(state.billFees.consultation) || 0;
+  const mFee = parseFloat(state.billFees.medicine) || 0;
+  const tFee = parseFloat(state.billFees.test) || 0;
+  const total = cFee + mFee + tFee;
+
+  return `
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Bill details</h3>
+          <span style="font-size:10px;font-weight:600;color:var(--warn-ink);letter-spacing:0.6px;">DRAFT</span>
+        </div>
+
+        <div class="field-group">
+          <label for="bill-patient">Patient *</label>
+          <select id="bill-patient" class="field-select">
+            ${patients.length === 0 ? `<option value="">No patients registered yet</option>` : patients.map(pt => `
+              <option value="${pt.id}" ${p && pt.id === p.id ? 'selected' : ''}>
+                ${esc(pt.name)} Â· PT-${pt.id} Â· ${esc(pt.phone)}
+              </option>
+            `).join('')}
+          </select>
+        </div>
+
+        <h4 style="font-size:15px;font-weight:600;color:var(--ink);">Services &amp; charges</h4>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>SERVICE</th>
+              <th style="text-align:right;width:180px;">AMOUNT (RS.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:500;">Consultation fee</td>
+              <td><input id="fee-consult" class="field-input" style="height:38px;text-align:right;" type="number" min="0" max="1000000" step="0.01" value="${esc(state.billFees.consultation)}" placeholder="0.00" /></td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;">Medicine fee</td>
+              <td><input id="fee-medicine" class="field-input" style="height:38px;text-align:right;" type="number" min="0" max="1000000" step="0.01" value="${esc(state.billFees.medicine)}" placeholder="0.00" /></td>
+            </tr>
+            <tr>
+              <td style="font-weight:500;">Lab / Test fee</td>
+              <td><input id="fee-test" class="field-input" style="height:38px;text-align:right;" type="number" min="0" max="1000000" step="0.01" value="${esc(state.billFees.test)}" placeholder="0.00" /></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="field-group">
+          <label for="bill-note">Invoice note</label>
+          <input id="bill-note" class="field-input" type="text" value="${esc(state.billFees.note)}" placeholder="Optional note for invoice" />
+        </div>
+        <p style="font-size:11px;color:var(--muted);">All charges are shown in Pakistani Rupees (Rs.). Medical services are tax exempt.</p>
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:18px;">
+        <div>
+          <h3 style="font-size:19px;font-weight:600;color:var(--ink);">Payment summary</h3>
+          <p style="font-size:12px;color:var(--muted);margin-top:6px;">New invoice Â· ${esc(p ? p.name : 'Select patient')}</p>
+        </div>
+        <div class="summary-kv"><span class="k">Consultation</span><span class="v" id="sum-consult">${formatRs(cFee)}</span></div>
+        <div class="summary-kv"><span class="k">Medicines</span><span class="v" id="sum-medicine">${formatRs(mFee)}</span></div>
+        <div class="summary-kv"><span class="k">Tests</span><span class="v" id="sum-test">${formatRs(tFee)}</span></div>
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:16px;font-weight:600;">Total due</span>
+          <span style="font-size:26px;font-weight:600;color:var(--ink);" id="sum-total">${formatRs(total)}</span>
+        </div>
+
+        <div class="field-group">
+          <label for="bill-status">Payment status *</label>
+          <select id="bill-status" class="field-select">
+            <option value="unpaid" ${state.billFees.status === 'unpaid' ? 'selected' : ''}>Unpaid Â· Collect at reception</option>
+            <option value="paid" ${state.billFees.status === 'paid' ? 'selected' : ''}>Paid Â· Settled immediately</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-primary btn-full" id="generate-bill-btn" ${!p ? 'disabled' : ''}>Generate bill â†’</button>
+        <button type="button" class="btn-secondary btn-full" data-nav="bill-view">View all bills</button>
+        <p style="font-size:11px;color:var(--muted);line-height:1.6;">
+          Generating creates a numbered Bill record in the system and updates total clinic revenue.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 12 Â· BILL VIEWING
+// ============================================================
+
+function renderBillViewScreen() {
+  const { bills, stats } = state.data;
+  const f = state.billFilter;
+  const filtered = bills.filter(b => {
+    if (f === 'paid') return b.paid;
+    if (f === 'unpaid') return !b.paid;
+    return true;
+  }).slice().reverse();
+
+  let selected = filtered.find(b => b.id === state.selectedBillId) || filtered[0] || null;
+  if (selected) state.selectedBillId = selected.id;
+  const selPatient = selected ? getPatient(selected.patientId) : null;
+
+  return `
+    ${state.billRefreshError ? `
+      <div class="banner-warn">
+        <div class="banner-warn-col">
+          <strong>We couldnâ€™t refresh the invoice list.</strong>
+          <span>Showing saved data. Your invoices are safe.</span>
+        </div>
+        <button class="btn-secondary" id="retry-bills-btn">Try again</button>
+      </div>
+    ` : ''}
+
+    <div class="split-layout">
+      <div class="card split-left-narrow" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Recent invoices</h3>
+          <span style="font-size:11px;font-weight:600;color:var(--primary);">Grand total: ${formatRs(stats.totalRevenue)}</span>
+        </div>
+
+        <div style="display:flex;gap:22px;padding-bottom:6px;border-bottom:1px solid var(--border-card);">
+          <button class="role-tab ${f === 'all' ? 'active' : ''}" style="padding-bottom:8px;" data-bill-filter="all">All (${bills.length})</button>
+          <button class="role-tab ${f === 'unpaid' ? 'active' : ''}" style="padding-bottom:8px;" data-bill-filter="unpaid">Unpaid (${bills.filter(b => !b.paid).length})</button>
+          <button class="role-tab ${f === 'paid' ? 'active' : ''}" style="padding-bottom:8px;" data-bill-filter="paid">Paid (${bills.filter(b => b.paid).length})</button>
+        </div>
+
+        ${filtered.length === 0 ? `<div class="empty-state">No invoices found.</div>` : filtered.map(b => {
+          const pt = getPatient(b.patientId);
+          const isSel = selected && selected.id === b.id;
+          return `
+            <div class="visit-row ${isSel ? 'selected' : ''}" style="padding:14px 12px;" data-select-bill="${b.id}">
+              <div>
+                <div style="font-size:13px;font-weight:500;">${esc(pt ? pt.name : 'Patient #' + b.patientId)}</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:4px;">BILL-${b.id}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13px;font-weight:500;">${formatRs(b.total)}</div>
+                <div style="font-size:10px;font-weight:500;margin-top:4px;color:${b.paid ? 'var(--primary)' : 'var(--warn-ink)'};">
+                  ${b.paid ? 'Paid' : 'Unpaid'}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;">
+          <span style="font-size:11px;color:var(--muted);">Showing ${filtered.length} of ${bills.length} bills</span>
+          <button class="link-btn" data-nav="bill-generate">+ New bill</button>
+        </div>
+      </div>
+
+      <div class="card split-right-wide" style="display:flex;flex-direction:column;gap:22px;padding:28px;">
+        ${!selected ? `<div class="empty-state">Select a bill to preview the invoice document.</div>` : `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:24px;font-weight:600;color:var(--primary);">wellnest.</div>
+              <div style="font-size:12px;font-weight:500;margin-top:4px;">Smart Clinic Management</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px;">Main clinic Â· Healthcare Billing Desk</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:20px;font-weight:600;color:var(--ink);">INVOICE</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:5px;">BILL-${selected.id}</div>
+              <div style="font-size:10px;font-weight:600;margin-top:5px;color:${selected.paid ? 'var(--primary)' : 'var(--warn-ink)'};">
+                ${selected.paid ? 'PAID' : 'UNPAID'}
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-weight:500;">BILL TO</div>
+              <div style="font-size:16px;font-weight:600;margin-top:6px;">${esc(selPatient ? selPatient.name : 'Patient #' + selected.patientId)}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">PT-${selected.patientId}${selPatient ? ` Â· ${esc(selPatient.phone)}` : ''}</div>
+            </div>
+            <div style="text-align:right;font-size:12px;color:var(--muted);">
+              <div>Currency: PKR (Rs.)</div>
+              <div style="margin-top:4px;">Tax exempt medical services</div>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>SERVICE</th>
+                <th style="text-align:center;">QTY</th>
+                <th style="text-align:right;">AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Consultation fee</td>
+                <td style="text-align:center;color:var(--muted);">1</td>
+                <td style="text-align:right;font-weight:500;">${formatRs(selected.consultationFee)}</td>
+              </tr>
+              <tr>
+                <td>Medicine fee</td>
+                <td style="text-align:center;color:var(--muted);">1</td>
+                <td style="text-align:right;font-weight:500;">${formatRs(selected.medicineFee)}</td>
+              </tr>
+              <tr>
+                <td>Lab / Test fee</td>
+                <td style="text-align:center;color:var(--muted);">1</td>
+                <td style="text-align:right;font-weight:500;">${formatRs(selected.testFee)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;">
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+              Thank you for choosing Smart Clinic.<br/>
+              <span style="font-size:10px;">Generated by SmartClinicManagement</span>
+            </div>
+            <div style="width:240px;display:flex;flex-direction:column;gap:10px;">
+              <div class="summary-kv"><span class="k">Subtotal</span><span class="v">${formatRs(selected.total)}</span></div>
+              <div class="summary-kv"><span class="k">Tax</span><span class="v">Rs. 0.00</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid var(--border-card);">
+                <span style="font-size:14px;font-weight:600;">Total</span>
+                <span style="font-size:24px;font-weight:600;color:var(--ink);">${formatRs(selected.total)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-print" style="display:flex;justify-content:flex-end;gap:12px;padding-top:4px;">
+            <button class="btn-secondary" onclick="window.print()">Print</button>
+            <button class="btn-secondary" id="download-bill-btn" data-bid="${selected.id}">Download receipt</button>
+            ${!selected.paid ? `<button class="btn-primary" id="record-payment-btn" data-bid="${selected.id}">Record payment</button>` : `<span class="pill pill-green" style="height:42px;padding:0 18px;font-size:12px;">âœ“ Paid</span>`}
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// MODALS (PATIENT RECORDS & DOCTOR PROFILE & HELP)
+// ============================================================
+
+function openModal(title, bodyHtml) {
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-box">
