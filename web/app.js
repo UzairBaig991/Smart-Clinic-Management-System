@@ -1,5 +1,5 @@
-﻿/* ============================================================
-   wellnest. â€” Smart Clinic Management System Frontend
+/* ============================================================
+   wellnest. — Smart Clinic Management System Frontend
    Implements all 12 Figma screens backed by SmartClinicManagement.java
    ============================================================ */
 
@@ -222,7 +222,7 @@ function render() {
 }
 
 // ============================================================
-// SCREEN 01 Â· ADMIN / DOCTOR / RECEPTIONIST LOGIN
+// SCREEN 01 · ADMIN / DOCTOR / RECEPTIONIST LOGIN
 // ============================================================
 
 function renderLoginScreen() {
@@ -242,20 +242,20 @@ function renderLoginScreen() {
         </div>
         <div class="field-group">
           <label for="login-pass">Password</label>
-          <input id="login-pass" class="field-input" type="password" value="admin123" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required />
+          <input id="login-pass" class="field-input" type="password" value="admin123" placeholder="••••••••" required />
         </div>
         <div class="login-prefs">
           <label class="checkbox-label"><input type="checkbox" checked /> Remember this device</label>
           <button type="button" class="link-btn" id="forgot-pass-btn">Forgot password?</button>
         </div>
-        <button type="submit" class="btn-primary btn-full" ${state.loginLocked ? 'disabled' : ''}>Sign in securely â†’</button>
+        <button type="submit" class="btn-primary btn-full" ${state.loginLocked ? 'disabled' : ''}>Sign in securely →</button>
         <div class="login-quick-hint">
           Admin credentials: <span>admin</span> / <span>admin123</span> (max 3 attempts)
         </div>
       </form>
     `;
   } else if (tab === 'doctor') {
-    const docOptions = state.data.doctors.map(d => `ID ${d.id} (Dr. ${esc(d.name)})`).join(' Â· ');
+    const docOptions = state.data.doctors.map(d => `ID ${d.id} (Dr. ${esc(d.name)})`).join(' · ');
     formHtml = `
       <div class="login-welcome">
         <h2>Doctor portal</h2>
@@ -267,7 +267,7 @@ function renderLoginScreen() {
           <label for="login-doc-id">Doctor ID</label>
           <input id="login-doc-id" class="field-input" type="number" min="1" value="${state.data.doctors[0]?.id || ''}" placeholder="Enter your Doctor ID (e.g. 101)" required />
         </div>
-        <button type="submit" class="btn-primary btn-full">Enter Doctor Portal â†’</button>
+        <button type="submit" class="btn-primary btn-full">Enter Doctor Portal →</button>
         <div class="login-quick-hint">
           ${docOptions ? `Registered Doctors: <span>${docOptions}</span>` : 'No doctors registered yet. Sign in as <span>Administrator</span> first to add a doctor.'}
         </div>
@@ -283,7 +283,7 @@ function renderLoginScreen() {
         <div class="login-quick-hint">
           Direct access to <span>Patient Registration</span>, <span>Patient Search</span>, <span>Appointment Booking &amp; Cancellation</span>, and <span>Bill Generation</span>.
         </div>
-        <button type="submit" class="btn-primary btn-full">Open Receptionist Workspace â†’</button>
+        <button type="submit" class="btn-primary btn-full">Open Receptionist Workspace →</button>
       </form>
     `;
   }
@@ -378,7 +378,7 @@ function bindLoginEvents() {
           state.session = {
             role: 'doctor',
             name: 'Dr. ' + d.name,
-            subtitle: `${d.specialization} Â· ID ${d.id}`,
+            subtitle: `${d.specialization} · ID ${d.id}`,
             doctorId: d.id
           };
           state.activeDoctorId = d.id;
@@ -496,7 +496,7 @@ function renderWorkspaceShell() {
         </div>
         <div class="clinic-selector">
           <div class="clinic-selector-name">Smart Clinic</div>
-          <div class="clinic-selector-loc">Main clinic Â· SCD Project</div>
+          <div class="clinic-selector-loc">Main clinic · SCD Project</div>
         </div>
         <nav class="sidebar-nav">
           ${NAV_ITEMS.map(item => `
@@ -509,12 +509,12 @@ function renderWorkspaceShell() {
         <div class="sidebar-spacer"></div>
         <div class="sidebar-support">
           <div class="sidebar-support-title">A little help, anytime.</div>
-          <button class="sidebar-support-link" id="help-center-btn">System overview &amp; guide â†’</button>
+          <button class="sidebar-support-link" id="help-center-btn">System overview &amp; guide →</button>
         </div>
         <div class="sidebar-account">
           <div class="sidebar-account-name">${esc(state.session.name)}</div>
           <div class="sidebar-account-role">${esc(state.session.subtitle)}</div>
-          <button class="sidebar-logout" id="logout-btn">â† Sign out / Switch role</button>
+          <button class="sidebar-logout" id="logout-btn">← Sign out / Switch role</button>
         </div>
       </aside>
 
@@ -522,7 +522,7 @@ function renderWorkspaceShell() {
         <header class="top-bar">
           <div>Workspace &nbsp;&nbsp;/&nbsp;&nbsp; ${esc(meta.crumb)}</div>
           <div class="top-bar-right">
-            <span>${esc(portalLabel)} &nbsp;&nbsp;Â·&nbsp;&nbsp; ${esc(todayStr)}</span>
+            <span>${esc(portalLabel)} &nbsp;&nbsp;·&nbsp;&nbsp; ${esc(todayStr)}</span>
           </div>
         </header>
 
@@ -542,7 +542,7 @@ function renderWorkspaceShell() {
 }
 
 // ============================================================
-// SCREEN 02 Â· SYSTEM STATISTICS
+// SCREEN 02 · SYSTEM STATISTICS
 // ============================================================
 
 function renderStatsScreen() {
@@ -559,7 +559,7 @@ function renderStatsScreen() {
 
   return `
     <div class="controls-row">
-      <span class="eyebrow-date">LIVE SYSTEM METRICS Â· ${stats.totalMedicalRecords} RECORDS Â· ${stats.totalPrescriptions} PRESCRIPTIONS</span>
+      <span class="eyebrow-date">LIVE SYSTEM METRICS · ${stats.totalMedicalRecords} RECORDS · ${stats.totalPrescriptions} PRESCRIPTIONS</span>
       <div style="display:flex;gap:12px;">
         <button class="btn-secondary" data-nav="doctors">+ Add doctor</button>
         <button class="btn-secondary" data-nav="patient-register">+ Register patient</button>
@@ -571,7 +571,7 @@ function renderStatsScreen() {
       <div class="kpi-card">
         <span class="kpi-label">Total appointments</span>
         <span class="kpi-value">${stats.totalAppointments}</span>
-        <span class="kpi-sub">${completedCount} completed Â· ${waitingCount} active</span>
+        <span class="kpi-sub">${completedCount} completed · ${waitingCount} active</span>
       </div>
       <div class="kpi-card">
         <span class="kpi-label">Registered patients</span>
@@ -595,7 +595,7 @@ function renderStatsScreen() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
             <h3 style="font-size:16px;font-weight:600;color:var(--ink);">Appointments this week</h3>
-            <p style="font-size:11px;color:var(--muted);margin-top:6px;">${stats.totalAppointments} scheduled visits Â· ${stats.totalPrescriptions} prescriptions issued</p>
+            <p style="font-size:11px;color:var(--muted);margin-top:6px;">${stats.totalAppointments} scheduled visits · ${stats.totalPrescriptions} prescriptions issued</p>
           </div>
           <span style="font-size:11px;font-weight:500;color:var(--primary);">This week</span>
         </div>
@@ -633,7 +633,7 @@ function renderStatsScreen() {
     <div class="card" style="padding:18px 24px 12px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h3 style="font-size:16px;font-weight:600;color:var(--ink);">Upcoming appointments</h3>
-        <button class="link-btn" data-nav="appt-cancel">View all appointments â†’</button>
+        <button class="link-btn" data-nav="appt-cancel">View all appointments →</button>
       </div>
       ${appointments.length === 0 ? `<div class="empty-state">No appointments scheduled yet. Click "Book appointment" to schedule one.</div>` : `
         <table class="data-table">
@@ -654,7 +654,7 @@ function renderStatsScreen() {
               return `
                 <tr>
                   <td style="color:var(--muted);">#${a.id}</td>
-                  <td>${esc(formatPrettyDate(a.date))} Â· ${esc(a.time)}</td>
+                  <td>${esc(formatPrettyDate(a.date))} · ${esc(a.time)}</td>
                   <td style="font-weight:500;">${esc(p ? p.name : 'Patient #' + a.patientId)}</td>
                   <td>Dr. ${esc(d ? d.name : '#' + a.doctorId)}</td>
                   <td>${esc(a.reason)}</td>
@@ -670,7 +670,7 @@ function renderStatsScreen() {
 }
 
 // ============================================================
-// SCREEN 03 Â· DOCTOR MANAGEMENT
+// SCREEN 03 · DOCTOR MANAGEMENT
 // ============================================================
 
 function renderDoctorsScreen() {
@@ -695,7 +695,7 @@ function renderDoctorsScreen() {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
             <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Your care team</h3>
-            <p style="font-size:12px;color:var(--muted);margin-top:6px;">${doctors.length} registered doctors Â· All active</p>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">${doctors.length} registered doctors · All active</p>
           </div>
           <button class="btn-secondary" id="export-doctors-btn">Export list</button>
         </div>
@@ -727,7 +727,7 @@ function renderDoctorsScreen() {
                   <tr>
                     <td>
                       <div style="font-weight:500;font-size:13px;">Dr. ${esc(d.name)} <span style="color:var(--muted);font-size:11px;">#${d.id}</span></div>
-                      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${esc(d.specialization)} Â· ${esc(d.qualification)}</div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${esc(d.specialization)} · ${esc(d.qualification)}</div>
                     </td>
                     <td>
                       <div style="font-size:12px;">${esc(d.email)}</div>
@@ -795,7 +795,7 @@ function renderDoctorsScreen() {
 }
 
 // ============================================================
-// SCREEN 04 Â· PATIENT SEARCH
+// SCREEN 04 · PATIENT SEARCH
 // ============================================================
 
 function renderPatientSearchScreen() {
@@ -839,7 +839,7 @@ function renderPatientSearchScreen() {
           <span style="font-size:12px;color:var(--muted);">${filtered.length} ${filtered.length === 1 ? 'patient' : 'patients'} found</span>
         </div>
         <p style="font-size:12px;color:var(--muted);margin-top:-6px;">
-          ${q ? `Matching â€œ${esc(state.patientSearchQuery)}â€ Â· ` : ''}Search by name, patient ID, phone, or email
+          ${q ? `Matching “${esc(state.patientSearchQuery)}” · ` : ''}Search by name, patient ID, phone, or email
         </p>
 
         ${filtered.length === 0 ? `<div class="empty-state">No patients found matching "${esc(state.patientSearchQuery)}".</div>` : `
@@ -858,7 +858,7 @@ function renderPatientSearchScreen() {
                 <tr class="selectable ${selected && selected.id === p.id ? 'selected' : ''}" data-select-patient="${p.id}">
                   <td style="color:var(--muted);">PT-${p.id}</td>
                   <td style="font-weight:500;">${esc(p.name)}</td>
-                  <td>${p.age} yrs Â· ${esc(p.gender)}</td>
+                  <td>${p.age} yrs · ${esc(p.gender)}</td>
                   <td>${esc(p.phone)}</td>
                   <td>${esc(p.address)}</td>
                 </tr>
@@ -877,7 +877,7 @@ function renderPatientSearchScreen() {
           </div>
           <div>
             <h2 style="font-size:24px;font-weight:600;color:var(--ink);">${esc(selected.name)}</h2>
-            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selected.id} &nbsp;Â·&nbsp; ${recCount} medical ${recCount === 1 ? 'record' : 'records'}</p>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selected.id} &nbsp;·&nbsp; ${recCount} medical ${recCount === 1 ? 'record' : 'records'}</p>
           </div>
           <div class="form-row-2">
             <div>
@@ -904,7 +904,7 @@ function renderPatientSearchScreen() {
           <div>
             <div style="font-size:10px;color:var(--muted);font-weight:500;">NEXT APPOINTMENT</div>
             <div style="font-size:13px;font-weight:500;margin-top:6px;">
-              ${nextAppt ? `${esc(formatPrettyDate(nextAppt.date))}, ${esc(nextAppt.time)} Â· ${esc(nextAppt.reason)}` : 'No upcoming appointment'}
+              ${nextAppt ? `${esc(formatPrettyDate(nextAppt.date))}, ${esc(nextAppt.time)} · ${esc(nextAppt.reason)}` : 'No upcoming appointment'}
             </div>
           </div>
           <div style="display:flex;gap:12px;margin-top:4px;">
@@ -923,7 +923,7 @@ function renderPatientSearchScreen() {
 }
 
 // ============================================================
-// SCREEN 05 Â· PATIENT REGISTRATION
+// SCREEN 05 · PATIENT REGISTRATION
 // ============================================================
 
 function renderPatientRegisterScreen() {
@@ -955,7 +955,7 @@ function renderPatientRegisterScreen() {
 
           <div class="form-row-2">
             <div class="field-group">
-              <label for="reg-age">Age (1â€“130) *</label>
+              <label for="reg-age">Age (1–130) *</label>
               <input id="reg-age" class="field-input ${e.age ? 'error' : ''}" type="number" min="1" max="130" value="${esc(d.age)}" placeholder="e.g. 28" />
               ${e.age ? `<span class="field-error-text">${esc(e.age)}</span>` : ''}
             </div>
@@ -1007,14 +1007,14 @@ function renderPatientRegisterScreen() {
             <span style="font-size:12px;font-weight:600;color:var(--primary);">01</span>
             <div>
               <div style="font-size:13px;font-weight:500;">Verify identity</div>
-              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Confirm the patientâ€™s full name, age, and gender.</p>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Confirm the patient’s full name, age, and gender.</p>
             </div>
           </div>
           <div style="display:flex;gap:14px;">
             <span style="font-size:12px;font-weight:600;color:var(--primary);">02</span>
             <div>
               <div style="font-size:13px;font-weight:500;">Add contact details</div>
-              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Use a valid 10â€“15 digit phone number and unique email address.</p>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Use a valid 10–15 digit phone number and unique email address.</p>
             </div>
           </div>
           <div style="display:flex;gap:14px;">
@@ -1031,14 +1031,14 @@ function renderPatientRegisterScreen() {
           <span style="line-height:1.6;">Only collect information needed for care. Access to patient details is restricted by staff role.</span>
         </div>
 
-        <button class="link-btn" style="text-align:left;" data-nav="patient-search">Already registered? &nbsp;Search patients â†’</button>
+        <button class="link-btn" style="text-align:left;" data-nav="patient-search">Already registered? &nbsp;Search patients →</button>
       </div>
     </div>
   `;
 }
 
 // ============================================================
-// SCREEN 06 Â· APPOINTMENT BOOKING
+// SCREEN 06 · APPOINTMENT BOOKING
 // ============================================================
 
 function buildCalendarDays(year, month) {
@@ -1087,9 +1087,9 @@ function renderAppointmentBookingScreen() {
   return `
     <div class="booking-steps">
       <span class="booking-step-active">01 &nbsp;Patient &amp; doctor</span>
-      <span style="color:#a4b6af;">â†’</span>
+      <span style="color:#a4b6af;">→</span>
       <span class="booking-step-active">02 &nbsp;Date &amp; time</span>
-      <span style="color:#a4b6af;">â†’</span>
+      <span style="color:#a4b6af;">→</span>
       <span class="booking-step-muted">03 &nbsp;Confirm booking</span>
     </div>
 
@@ -1102,7 +1102,7 @@ function renderAppointmentBookingScreen() {
           <select id="book-patient" class="field-select">
             ${patients.length === 0 ? `<option value="">No patients registered yet</option>` : patients.map(p => `
               <option value="${p.id}" ${p.id === Number(state.bookingPatientId) ? 'selected' : ''}>
-                ${esc(p.name)} Â· PT-${p.id} Â· ${p.age} yrs (${esc(p.gender)})
+                ${esc(p.name)} · PT-${p.id} · ${p.age} yrs (${esc(p.gender)})
               </option>
             `).join('')}
           </select>
@@ -1114,7 +1114,7 @@ function renderAppointmentBookingScreen() {
             <select id="book-doctor" class="field-select">
               ${doctors.length === 0 ? `<option value="">No doctors added yet</option>` : doctors.map(d => `
                 <option value="${d.id}" ${d.id === Number(state.bookingDoctorId) ? 'selected' : ''}>
-                  Dr. ${esc(d.name)} Â· ${esc(d.specialization)}
+                  Dr. ${esc(d.name)} · ${esc(d.specialization)}
                 </option>
               `).join('')}
             </select>
@@ -1143,8 +1143,8 @@ function renderAppointmentBookingScreen() {
             <div class="calendar-header">
               <h4>${MONTHS[state.calMonth]} ${state.calYear}</h4>
               <div class="cal-nav">
-                <button type="button" id="cal-prev">â€¹</button>
-                <button type="button" id="cal-next">â€º</button>
+                <button type="button" id="cal-prev">‹</button>
+                <button type="button" id="cal-next">›</button>
               </div>
             </div>
             <div class="cal-grid">
@@ -1188,12 +1188,12 @@ function renderAppointmentBookingScreen() {
         <div>
           <div style="font-size:21px;font-weight:600;color:var(--ink);">${esc(selPatient?.name || 'Select a patient')}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:6px;">
-            ${selPatient ? `PT-${selPatient.id} Â· ${esc(selPatient.gender)}, ${selPatient.age} years` : 'No patient registered'}
+            ${selPatient ? `PT-${selPatient.id} · ${esc(selPatient.gender)}, ${selPatient.age} years` : 'No patient registered'}
           </div>
         </div>
         <div class="divider"></div>
-        <div class="summary-kv"><span class="k">Doctor</span><span class="v">${selDoctor ? 'Dr. ' + esc(selDoctor.name) : 'â€”'}</span></div>
-        <div class="summary-kv"><span class="k">Specialty</span><span class="v">${esc(selDoctor?.specialization || 'â€”')}</span></div>
+        <div class="summary-kv"><span class="k">Doctor</span><span class="v">${selDoctor ? 'Dr. ' + esc(selDoctor.name) : '—'}</span></div>
+        <div class="summary-kv"><span class="k">Specialty</span><span class="v">${esc(selDoctor?.specialization || '—')}</span></div>
         <div class="summary-kv"><span class="k">Date</span><span class="v">${formatPrettyDate(dateStr)}</span></div>
         <div class="summary-kv"><span class="k">Time</span><span class="v">${esc(state.bookingTime)}</span></div>
         <div class="summary-kv"><span class="k">Reason</span><span class="v" id="summary-reason">${esc(state.bookingReason)}</span></div>
@@ -1211,7 +1211,7 @@ function renderAppointmentBookingScreen() {
 }
 
 // ============================================================
-// SCREEN 07 Â· APPOINTMENT CANCELLATION
+// SCREEN 07 · APPOINTMENT CANCELLATION
 // ============================================================
 
 function renderAppointmentCancelScreen() {
@@ -1252,7 +1252,7 @@ function renderAppointmentCancelScreen() {
         <h3 style="font-size:18px;font-weight:600;color:var(--ink);">
           ${tab === 'upcoming' ? 'Upcoming appointments' : tab === 'completed' ? 'Completed visits' : 'Cancelled appointments'}
         </h3>
-        <p style="font-size:12px;color:var(--muted);margin-top:-4px;">${list.length} ${list.length === 1 ? 'appointment' : 'appointments'} Â· Main clinic</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:-4px;">${list.length} ${list.length === 1 ? 'appointment' : 'appointments'} · Main clinic</p>
 
         ${list.length === 0 ? `<div class="empty-state">No appointments in this category.</div>` : list.map(a => {
           const p = getPatient(a.patientId);
@@ -1267,8 +1267,8 @@ function renderAppointmentCancelScreen() {
               <div style="flex:1;">
                 <div style="font-size:14px;font-weight:500;">${esc(p ? p.name : 'Patient #' + a.patientId)}</div>
                 <div style="font-size:11px;color:var(--muted);margin-top:4px;">
-                  Dr. ${esc(d ? d.name : '#' + a.doctorId)} Â· ${esc(a.reason)}
-                  ${tab === 'cancelled' && a.cancelReason ? ` Â· Reason: ${esc(a.cancelReason)}` : ''}
+                  Dr. ${esc(d ? d.name : '#' + a.doctorId)} · ${esc(a.reason)}
+                  ${tab === 'cancelled' && a.cancelReason ? ` · Reason: ${esc(a.cancelReason)}` : ''}
                 </div>
               </div>
               <span style="font-size:11px;font-weight:500;color:${tab === 'cancelled' ? 'var(--cancel-ink)' : 'var(--primary)'};">
@@ -1289,9 +1289,9 @@ function renderAppointmentCancelScreen() {
         ${!selected ? `<div class="empty-state">Select an upcoming appointment from the list to review cancellation.</div>` : `
           <div style="background:var(--bg-canvas);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;">
             <div style="font-size:18px;font-weight:600;color:var(--ink);">${esc(selPatient ? selPatient.name : 'Patient #' + selected.patientId)}</div>
-            <div style="font-size:11px;color:var(--muted);">APT-${selected.id} Â· PT-${selected.patientId}</div>
-            <div style="font-size:12px;color:var(--ink);">${esc(formatPrettyDate(selected.date))} Â· ${esc(selected.time)}</div>
-            <div style="font-size:12px;color:var(--muted);">Dr. ${esc(selDoctor ? selDoctor.name : '#' + selected.doctorId)} Â· ${esc(selected.reason)}</div>
+            <div style="font-size:11px;color:var(--muted);">APT-${selected.id} · PT-${selected.patientId}</div>
+            <div style="font-size:12px;color:var(--ink);">${esc(formatPrettyDate(selected.date))} · ${esc(selected.time)}</div>
+            <div style="font-size:12px;color:var(--muted);">Dr. ${esc(selDoctor ? selDoctor.name : '#' + selected.doctorId)} · ${esc(selected.reason)}</div>
           </div>
 
           <div class="field-group">
@@ -1316,7 +1316,7 @@ function renderAppointmentCancelScreen() {
 }
 
 // ============================================================
-// SCREEN 08 Â· DOCTOR APPOINTMENTS
+// SCREEN 08 · DOCTOR APPOINTMENTS
 // ============================================================
 
 function renderDoctorAppointmentsScreen() {
@@ -1345,7 +1345,7 @@ function renderDoctorAppointmentsScreen() {
         <div>
           <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Good day, Dr. ${esc(doc ? doc.name : 'Doctor')}</h3>
           <p style="font-size:12px;color:var(--muted);margin-top:6px;">
-            ${doc ? `${esc(doc.specialization)} Â· ${esc(doc.qualification)} Â· ID #${doc.id}` : 'No doctor selected'}
+            ${doc ? `${esc(doc.specialization)} · ${esc(doc.qualification)} · ID #${doc.id}` : 'No doctor selected'}
           </p>
         </div>
         ${doctors.length > 1 ? `
@@ -1363,7 +1363,7 @@ function renderDoctorAppointmentsScreen() {
     <div class="split-layout">
       <div class="card split-left" style="display:flex;flex-direction:column;gap:12px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Doctorâ€™s appointments</h3>
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Doctor’s appointments</h3>
           <button class="btn-secondary" id="view-doc-profile-btn" style="height:38px;">View my profile</button>
         </div>
 
@@ -1395,7 +1395,7 @@ function renderDoctorAppointmentsScreen() {
           </div>
           <div>
             <h2 style="font-size:24px;font-weight:600;color:var(--ink);">${esc(selPatient.name)}</h2>
-            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selPatient.id} Â· ${esc(selPatient.gender)}, ${selPatient.age} years Â· ${esc(selPatient.phone)}</p>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selPatient.id} · ${esc(selPatient.gender)}, ${selPatient.age} years · ${esc(selPatient.phone)}</p>
           </div>
           <div>
             <div style="font-size:10px;color:var(--muted);font-weight:500;">REASON FOR VISIT</div>
@@ -1412,7 +1412,7 @@ function renderDoctorAppointmentsScreen() {
             <button type="button" class="btn-secondary" style="flex:1;height:38px;" data-set-status="Completed" data-aid="${selected.id}">Mark complete</button>
           </div>
           <button type="button" class="btn-primary btn-full" id="start-consult-btn" data-pid="${selPatient.id}" data-did="${doc.id}">
-            Start consultation â†’
+            Start consultation →
           </button>
           <button type="button" class="btn-secondary btn-full" id="doc-view-history-btn" data-pid="${selPatient.id}">
             View medical history
@@ -1425,7 +1425,7 @@ function renderDoctorAppointmentsScreen() {
 }
 
 // ============================================================
-// SCREEN 09 Â· MEDICAL RECORD CREATION
+// SCREEN 09 · MEDICAL RECORD CREATION
 // ============================================================
 
 function renderMedicalRecordScreen() {
@@ -1443,7 +1443,7 @@ function renderMedicalRecordScreen() {
         <div>
           <h3 style="font-size:20px;font-weight:600;color:var(--ink);">${esc(p ? p.name : 'Select patient')}</h3>
           <p style="font-size:12px;color:var(--muted);margin-top:5px;">
-            ${p ? `PT-${p.id} Â· ${esc(p.gender)}, ${p.age} years Â· ${esc(p.address)}` : ''}
+            ${p ? `PT-${p.id} · ${esc(p.gender)}, ${p.age} years · ${esc(p.address)}` : ''}
           </p>
         </div>
         <div style="display:flex;gap:12px;align-items:center;">
@@ -1461,7 +1461,7 @@ function renderMedicalRecordScreen() {
       <div class="card split-left" style="display:flex;flex-direction:column;gap:16px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Clinical notes</h3>
-          <span style="font-size:11px;color:var(--muted);">Attending: Dr. ${esc(d ? d.name : 'â€”')}</span>
+          <span style="font-size:11px;color:var(--muted);">Attending: Dr. ${esc(d ? d.name : '—')}</span>
         </div>
 
         <form id="medical-record-form" style="display:flex;flex-direction:column;gap:16px;">
@@ -1479,7 +1479,7 @@ function renderMedicalRecordScreen() {
           </div>
           <div style="display:flex;justify-content:flex-end;gap:14px;padding-top:4px;">
             <button type="submit" class="btn-secondary" data-after="stay" ${(!p || !d) ? 'disabled' : ''}>Save record</button>
-            <button type="submit" class="btn-primary" data-after="rx" ${(!p || !d) ? 'disabled' : ''}>Save &amp; create prescription â†’</button>
+            <button type="submit" class="btn-primary" data-after="rx" ${(!p || !d) ? 'disabled' : ''}>Save &amp; create prescription →</button>
           </div>
           <span style="font-size:10px;color:var(--muted);">Saving creates a permanent MedicalRecord linked to this patient and doctor.</span>
         </form>
@@ -1493,7 +1493,7 @@ function renderMedicalRecordScreen() {
             <div class="field-group"><label>Heart rate</label><input class="field-input" value="72 bpm" /></div>
           </div>
           <div class="form-row-2">
-            <div class="field-group"><label>Temperature</label><input class="field-input" value="36.8 Â°C" /></div>
+            <div class="field-group"><label>Temperature</label><input class="field-input" value="36.8 °C" /></div>
             <div class="field-group"><label>Weight</label><input class="field-input" value="68 kg" /></div>
           </div>
         </div>
@@ -1518,7 +1518,7 @@ function renderMedicalRecordScreen() {
 }
 
 // ============================================================
-// SCREEN 10 Â· PRESCRIPTION CREATION
+// SCREEN 10 · PRESCRIPTION CREATION
 // ============================================================
 
 function renderPrescriptionScreen() {
@@ -1537,7 +1537,7 @@ function renderPrescriptionScreen() {
         <div>
           <h3 style="font-size:20px;font-weight:600;color:var(--ink);">${esc(p ? p.name : 'Select patient')}</h3>
           <p style="font-size:12px;color:var(--muted);margin-top:5px;">
-            ${p ? `PT-${p.id} Â· ${esc(p.gender)}, ${p.age} years Â· ${patientRx.length} issued ${patientRx.length === 1 ? 'prescription' : 'prescriptions'}` : ''}
+            ${p ? `PT-${p.id} · ${esc(p.gender)}, ${p.age} years · ${patientRx.length} issued ${patientRx.length === 1 ? 'prescription' : 'prescriptions'}` : ''}
           </p>
         </div>
         <div style="display:flex;gap:12px;">
@@ -1580,7 +1580,7 @@ function renderPrescriptionScreen() {
           </div>
           <label class="checkbox-label">
             <input id="rx-reviewed" type="checkbox" ${rx.reviewed ? 'checked' : ''} />
-            <span>I have reviewed the patientâ€™s allergies and medication plan.</span>
+            <span>I have reviewed the patient’s allergies and medication plan.</span>
           </label>
           <div style="display:flex;justify-content:flex-end;gap:12px;">
             <button type="button" class="btn-secondary" onclick="window.print()">Print Rx</button>
@@ -1594,8 +1594,8 @@ function renderPrescriptionScreen() {
           ${patientRx.map(item => `
             <div style="background:var(--bg-canvas);border-radius:8px;padding:12px 14px;font-size:12px;display:flex;justify-content:space-between;gap:12px;">
               <div>
-                <strong>#${item.id} Â· ${esc(item.medicine)}</strong>
-                <div style="color:var(--muted);margin-top:3px;">${esc(item.dosage)} Â· ${esc(item.duration)} â€” ${esc(item.instructions)}</div>
+                <strong>#${item.id} · ${esc(item.medicine)}</strong>
+                <div style="color:var(--muted);margin-top:3px;">${esc(item.dosage)} · ${esc(item.duration)} — ${esc(item.instructions)}</div>
               </div>
               <span class="pill pill-green">Signed</span>
             </div>
@@ -1612,27 +1612,27 @@ function renderPrescriptionScreen() {
           <div style="font-size:38px;font-weight:500;color:#a5bdb1;line-height:1;">Rx</div>
         </div>
         <div>
-          <div style="font-size:15px;font-weight:600;color:var(--ink);">Dr. ${esc(d ? d.name : 'â€”')}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${esc(d ? `${d.specialization} Â· ${d.qualification}` : '')}</div>
+          <div style="font-size:15px;font-weight:600;color:var(--ink);">Dr. ${esc(d ? d.name : '—')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${esc(d ? `${d.specialization} · ${d.qualification}` : '')}</div>
         </div>
         <div class="divider"></div>
         <div>
           <div style="font-size:10px;color:var(--muted);font-weight:500;">PRESCRIBED FOR</div>
-          <div style="font-size:18px;font-weight:600;margin-top:6px;">${esc(p ? p.name : 'â€”')}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${p ? `${p.age} years Â· ${esc(p.gender)} Â· PT-${p.id}` : ''}</div>
+          <div style="font-size:18px;font-weight:600;margin-top:6px;">${esc(p ? p.name : '—')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${p ? `${p.age} years · ${esc(p.gender)} · PT-${p.id}` : ''}</div>
         </div>
         <div style="padding:12px 0;">
           <div style="font-size:16px;font-weight:600;color:var(--ink);" id="rx-prev-med">01 &nbsp;&nbsp;${esc(rx.medicine || 'Medicine')}</div>
-          <div style="font-size:12px;color:var(--ink);margin-top:8px;" id="rx-prev-dose">${esc(rx.dosage || 'â€”')} Â· ${esc(rx.duration || 'â€”')}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;" id="rx-prev-inst">${esc(rx.instructions || 'â€”')}</div>
+          <div style="font-size:12px;color:var(--ink);margin-top:8px;" id="rx-prev-dose">${esc(rx.dosage || '—')} · ${esc(rx.duration || '—')}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;" id="rx-prev-inst">${esc(rx.instructions || '—')}</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--muted);font-weight:500;">FOLLOW-UP</div>
-          <div style="font-size:13px;font-weight:500;margin-top:5px;" id="rx-prev-fu">${esc(rx.followUp || 'â€”')}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:5px;" id="rx-prev-fu">${esc(rx.followUp || '—')}</div>
         </div>
         <div style="padding-top:10px;">
           <div style="font-size:14px;font-weight:500;color:var(--warn-ink);">Live preview</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Click â€œSign prescriptionâ€ to issue and save to records.</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Click “Sign prescription” to issue and save to records.</div>
         </div>
       </div>
     </div>
@@ -1640,7 +1640,7 @@ function renderPrescriptionScreen() {
 }
 
 // ============================================================
-// SCREEN 11 Â· BILL GENERATION
+// SCREEN 11 · BILL GENERATION
 // ============================================================
 
 function renderBillGenerateScreen() {
@@ -1666,7 +1666,7 @@ function renderBillGenerateScreen() {
           <select id="bill-patient" class="field-select">
             ${patients.length === 0 ? `<option value="">No patients registered yet</option>` : patients.map(pt => `
               <option value="${pt.id}" ${p && pt.id === p.id ? 'selected' : ''}>
-                ${esc(pt.name)} Â· PT-${pt.id} Â· ${esc(pt.phone)}
+                ${esc(pt.name)} · PT-${pt.id} · ${esc(pt.phone)}
               </option>
             `).join('')}
           </select>
@@ -1707,7 +1707,7 @@ function renderBillGenerateScreen() {
       <div class="card split-right" style="display:flex;flex-direction:column;gap:18px;">
         <div>
           <h3 style="font-size:19px;font-weight:600;color:var(--ink);">Payment summary</h3>
-          <p style="font-size:12px;color:var(--muted);margin-top:6px;">New invoice Â· ${esc(p ? p.name : 'Select patient')}</p>
+          <p style="font-size:12px;color:var(--muted);margin-top:6px;">New invoice · ${esc(p ? p.name : 'Select patient')}</p>
         </div>
         <div class="summary-kv"><span class="k">Consultation</span><span class="v" id="sum-consult">${formatRs(cFee)}</span></div>
         <div class="summary-kv"><span class="k">Medicines</span><span class="v" id="sum-medicine">${formatRs(mFee)}</span></div>
@@ -1721,12 +1721,12 @@ function renderBillGenerateScreen() {
         <div class="field-group">
           <label for="bill-status">Payment status *</label>
           <select id="bill-status" class="field-select">
-            <option value="unpaid" ${state.billFees.status === 'unpaid' ? 'selected' : ''}>Unpaid Â· Collect at reception</option>
-            <option value="paid" ${state.billFees.status === 'paid' ? 'selected' : ''}>Paid Â· Settled immediately</option>
+            <option value="unpaid" ${state.billFees.status === 'unpaid' ? 'selected' : ''}>Unpaid · Collect at reception</option>
+            <option value="paid" ${state.billFees.status === 'paid' ? 'selected' : ''}>Paid · Settled immediately</option>
           </select>
         </div>
 
-        <button type="button" class="btn-primary btn-full" id="generate-bill-btn" ${!p ? 'disabled' : ''}>Generate bill â†’</button>
+        <button type="button" class="btn-primary btn-full" id="generate-bill-btn" ${!p ? 'disabled' : ''}>Generate bill →</button>
         <button type="button" class="btn-secondary btn-full" data-nav="bill-view">View all bills</button>
         <p style="font-size:11px;color:var(--muted);line-height:1.6;">
           Generating creates a numbered Bill record in the system and updates total clinic revenue.
@@ -1737,7 +1737,7 @@ function renderBillGenerateScreen() {
 }
 
 // ============================================================
-// SCREEN 12 Â· BILL VIEWING
+// SCREEN 12 · BILL VIEWING
 // ============================================================
 
 function renderBillViewScreen() {
@@ -1757,7 +1757,7 @@ function renderBillViewScreen() {
     ${state.billRefreshError ? `
       <div class="banner-warn">
         <div class="banner-warn-col">
-          <strong>We couldnâ€™t refresh the invoice list.</strong>
+          <strong>We couldn’t refresh the invoice list.</strong>
           <span>Showing saved data. Your invoices are safe.</span>
         </div>
         <button class="btn-secondary" id="retry-bills-btn">Try again</button>
@@ -1808,7 +1808,7 @@ function renderBillViewScreen() {
             <div>
               <div style="font-size:24px;font-weight:600;color:var(--primary);">wellnest.</div>
               <div style="font-size:12px;font-weight:500;margin-top:4px;">Smart Clinic Management</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:3px;">Main clinic Â· Healthcare Billing Desk</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:3px;">Main clinic · Healthcare Billing Desk</div>
             </div>
             <div style="text-align:right;">
               <div style="font-size:20px;font-weight:600;color:var(--ink);">INVOICE</div>
@@ -1823,7 +1823,7 @@ function renderBillViewScreen() {
             <div>
               <div style="font-size:10px;color:var(--muted);font-weight:500;">BILL TO</div>
               <div style="font-size:16px;font-weight:600;margin-top:6px;">${esc(selPatient ? selPatient.name : 'Patient #' + selected.patientId)}</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">PT-${selected.patientId}${selPatient ? ` Â· ${esc(selPatient.phone)}` : ''}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">PT-${selected.patientId}${selPatient ? ` · ${esc(selPatient.phone)}` : ''}</div>
             </div>
             <div style="text-align:right;font-size:12px;color:var(--muted);">
               <div>Currency: PKR (Rs.)</div>
@@ -1876,7 +1876,7 @@ function renderBillViewScreen() {
           <div class="no-print" style="display:flex;justify-content:flex-end;gap:12px;padding-top:4px;">
             <button class="btn-secondary" onclick="window.print()">Print</button>
             <button class="btn-secondary" id="download-bill-btn" data-bid="${selected.id}">Download receipt</button>
-            ${!selected.paid ? `<button class="btn-primary" id="record-payment-btn" data-bid="${selected.id}">Record payment</button>` : `<span class="pill pill-green" style="height:42px;padding:0 18px;font-size:12px;">âœ“ Paid</span>`}
+            ${!selected.paid ? `<button class="btn-primary" id="record-payment-btn" data-bid="${selected.id}">Record payment</button>` : `<span class="pill pill-green" style="height:42px;padding:0 18px;font-size:12px;">✓ Paid</span>`}
           </div>
         `}
       </div>
@@ -1893,3 +1893,602 @@ function openModal(title, bodyHtml) {
   root.innerHTML = `
     <div class="modal-backdrop" id="modal-backdrop">
       <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:19px;font-weight:600;color:var(--ink);">${esc(title)}</h3>
+          <button class="btn-secondary" id="close-modal-btn" style="height:34px;padding:0 12px;">Close</button>
+        </div>
+        <div class="divider"></div>
+        ${bodyHtml}
+      </div>
+    </div>
+  `;
+  document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+  document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-backdrop') closeModal();
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal-root').innerHTML = '';
+}
+
+function showPatientRecordsModal(patientId) {
+  const p = getPatient(patientId);
+  if (!p) return;
+  const recs = state.data.medicalRecords.filter(r => r.patientId === p.id);
+  const rxs = state.data.prescriptions.filter(r => r.patientId === p.id);
+
+  const html = `
+    <div style="font-size:13px;color:var(--muted);">
+      <strong style="color:var(--ink);">${esc(p.name)}</strong> · PT-${p.id} · ${p.age} yrs, ${esc(p.gender)} · ${esc(p.phone)}
+    </div>
+    <h4 style="font-size:14px;font-weight:600;">Medical Records (${recs.length})</h4>
+    ${recs.length === 0 ? `<p style="font-size:12px;color:var(--muted);">No medical records found for this patient.</p>` : recs.map(r => {
+      const doc = getDoctor(r.doctorId);
+      return `
+        <div style="background:var(--bg-canvas);border-radius:8px;padding:12px 14px;font-size:12px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;justify-content:space-between;"><strong>#${r.id} · ${esc(r.diagnosis)}</strong><span style="color:var(--muted);">Dr. ${esc(doc ? doc.name : '#' + r.doctorId)}</span></div>
+          <div><span style="color:var(--muted);">Symptoms:</span> ${esc(r.symptoms)}</div>
+          <div><span style="color:var(--muted);">Notes:</span> ${esc(r.notes)}</div>
+        </div>
+      `;
+    }).join('')}
+    <h4 style="font-size:14px;font-weight:600;margin-top:6px;">Prescriptions (${rxs.length})</h4>
+    ${rxs.length === 0 ? `<p style="font-size:12px;color:var(--muted);">No prescriptions found for this patient.</p>` : rxs.map(rx => {
+      const doc = getDoctor(rx.doctorId);
+      return `
+        <div style="background:var(--bg-soft-mint);border-radius:8px;padding:12px 14px;font-size:12px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;justify-content:space-between;"><strong>Rx #${rx.id} · ${esc(rx.medicine)}</strong><span style="color:var(--muted);">Dr. ${esc(doc ? doc.name : '#' + rx.doctorId)}</span></div>
+          <div>${esc(rx.dosage)} · ${esc(rx.duration)}</div>
+          <div style="color:var(--muted);">${esc(rx.instructions)}</div>
+        </div>
+      `;
+    }).join('')}
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+      <button class="btn-secondary" id="modal-add-rec-btn">Add medical record</button>
+      <button class="btn-primary" id="modal-add-rx-btn">Create prescription</button>
+    </div>
+  `;
+  openModal('Patient Medical History', html);
+  document.getElementById('modal-add-rec-btn').addEventListener('click', () => {
+    closeModal();
+    navigate('medical-record', { patientId: p.id });
+  });
+  document.getElementById('modal-add-rx-btn').addEventListener('click', () => {
+    closeModal();
+    navigate('prescription', { patientId: p.id });
+  });
+}
+
+// ============================================================
+// EVENT BINDING FOR ALL WORKSPACE SCREENS
+// ============================================================
+
+function bindWorkspaceEvents() {
+  // Navigation
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.addEventListener('click', () => navigate(el.dataset.nav));
+  });
+
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      state.session = null;
+      state.screen = 'login';
+      state.loginError = '';
+      showToast('Signed out successfully.');
+      render();
+    });
+  }
+
+  const helpBtn = document.getElementById('help-center-btn');
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      openModal('Smart Clinic Management System Guide', `
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;">
+          This web interface runs directly on your existing <code>SmartClinicManagement.java</code> classes
+          (<code>User</code>, <code>Doctor</code>, <code>Patient</code>, <code>Appointment</code>,
+          <code>MedicalRecord</code>, <code>Prescription</code>, <code>Bill</code>) with zero class modifications.
+        </p>
+        <div style="font-size:12px;line-height:1.8;color:var(--ink);">
+          <div>• <strong>Admin Login:</strong> <code>admin</code> / <code>admin123</code></div>
+          <div>• <strong>Doctor Login:</strong> Enter Doctor ID (e.g. <code>101</code> or <code>102</code>)</div>
+          <div>• <strong>Receptionist:</strong> Register patients, search, book/cancel appointments, generate bills</div>
+          <div>• <strong>CLI Mode:</strong> Run <code>java SmartClinicManagement --cli</code> anytime</div>
+        </div>
+      `);
+    });
+  }
+
+  // Screen 02: Stats
+  const refreshStatsBtn = document.getElementById('refresh-stats-btn');
+  if (refreshStatsBtn) {
+    refreshStatsBtn.addEventListener('click', async () => {
+      await refreshState();
+      showToast('Statistics refreshed.');
+      render();
+    });
+  }
+
+  // Screen 03: Doctors
+  const docSearch = document.getElementById('doctor-search-input');
+  if (docSearch) {
+    docSearch.addEventListener('input', (e) => {
+      state.doctorSearch = e.target.value;
+      render();
+      const inp = document.getElementById('doctor-search-input');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    });
+  }
+  const docSpecFilter = document.getElementById('doctor-spec-filter');
+  if (docSpecFilter) {
+    docSpecFilter.addEventListener('change', (e) => {
+      state.doctorSpecialtyFilter = e.target.value;
+      render();
+    });
+  }
+  const exportDocBtn = document.getElementById('export-doctors-btn');
+  if (exportDocBtn) {
+    exportDocBtn.addEventListener('click', () => {
+      const rows = [['ID', 'Name', 'Email', 'Phone', 'Specialization', 'Qualification']];
+      state.data.doctors.forEach(d => rows.push([d.id, d.name, d.email, d.phone, d.specialization, d.qualification]));
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      downloadText('doctors.csv', csv, 'text/csv');
+      showToast('Exported doctors.csv');
+    });
+  }
+  document.querySelectorAll('[data-doc-schedule]').forEach(btn => {
+    btn.addEventListener('click', () => navigate('doctor-appts', { doctorId: Number(btn.dataset.docSchedule) }));
+  });
+  document.querySelectorAll('[data-delete-doctor]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = Number(btn.dataset.deleteDoctor);
+      const doc = getDoctor(id);
+      if (!doc) return;
+      if (!confirm(`Delete Dr. ${doc.name} (ID #${doc.id})?`)) return;
+      try {
+        await api(`/api/doctors/${id}`, { method: 'DELETE' });
+        await refreshState();
+        showToast(`Dr. ${doc.name} deleted successfully.`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  });
+  const addDocForm = document.getElementById('add-doctor-form');
+  if (addDocForm) {
+    addDocForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('doc-name').value.trim(),
+        email: document.getElementById('doc-email').value.trim(),
+        phone: document.getElementById('doc-phone').value.trim(),
+        specialization: document.getElementById('doc-spec').value.trim(),
+        qualification: document.getElementById('doc-qual').value.trim()
+      };
+      try {
+        const res = await api('/api/doctors', { method: 'POST', body: JSON.stringify(payload) });
+        await refreshState();
+        showToast(`Doctor added! Assigned ID: ${res.doctor.id}`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+
+  // Screen 04: Patient search
+  const patSearch = document.getElementById('patient-search-input');
+  if (patSearch) {
+    patSearch.addEventListener('input', (e) => {
+      state.patientSearchQuery = e.target.value;
+      render();
+      const inp = document.getElementById('patient-search-input');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    });
+  }
+  const clearPatBtn = document.getElementById('clear-patient-search');
+  if (clearPatBtn) {
+    clearPatBtn.addEventListener('click', () => { state.patientSearchQuery = ''; render(); });
+  }
+  const showAllPatBtn = document.getElementById('show-all-patients-btn');
+  if (showAllPatBtn) {
+    showAllPatBtn.addEventListener('click', () => { state.patientSearchQuery = ''; render(); });
+  }
+  document.querySelectorAll('[data-select-patient]').forEach(row => {
+    row.addEventListener('click', () => {
+      state.selectedPatientId = Number(row.dataset.selectPatient);
+      render();
+    });
+  });
+  const viewRecsBtn = document.getElementById('view-patient-records-btn');
+  if (viewRecsBtn) {
+    viewRecsBtn.addEventListener('click', () => showPatientRecordsModal(Number(viewRecsBtn.dataset.pid)));
+  }
+  const bookForPatBtn = document.getElementById('book-for-patient-btn');
+  if (bookForPatBtn) {
+    bookForPatBtn.addEventListener('click', () => navigate('appt-book', { patientId: Number(bookForPatBtn.dataset.pid) }));
+  }
+
+  // Screen 05: Patient registration
+  const regForm = document.getElementById('register-patient-form');
+  if (regForm) {
+    regForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const draft = {
+        name: document.getElementById('reg-name').value.trim(),
+        age: document.getElementById('reg-age').value.trim(),
+        gender: document.getElementById('reg-gender').value,
+        phone: document.getElementById('reg-phone').value.trim(),
+        email: document.getElementById('reg-email').value.trim(),
+        address: document.getElementById('reg-address').value.trim(),
+        consent: document.getElementById('reg-consent').checked
+      };
+      state.regDraft = draft;
+      const errs = {};
+      if (!draft.name) errs.name = 'Patient full name is required.';
+      const ageNum = Number(draft.age);
+      if (!draft.age || isNaN(ageNum) || ageNum < 1 || ageNum > 130) errs.age = 'Age must be between 1 and 130.';
+      const digits = draft.phone.replace(/[\s\-+()]/g, '');
+      if (!/^\d{10,15}$/.test(digits)) errs.phone = 'Enter a valid 10 to 15 digit phone number.';
+      if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(draft.email)) errs.email = 'Enter a valid email address.';
+      if (!draft.address) errs.address = 'Home address is required.';
+      state.regErrors = errs;
+      if (Object.keys(errs).length > 0) {
+        render();
+        return;
+      }
+      try {
+        const res = await api('/api/patients', { method: 'POST', body: JSON.stringify(draft) });
+        state.regErrors = {};
+        state.regDraft = { name: '', email: '', phone: '', age: '', gender: 'Male', address: '', consent: true };
+        await refreshState();
+        showToast(`Patient registered! Assigned ID: PT-${res.patient.id}`);
+        navigate('patient-search', { patientId: res.patient.id });
+      } catch (err) {
+        state.regErrors = { email: err.message };
+        showToast(err.message, true);
+        render();
+      }
+    });
+  }
+
+  // Screen 06: Appointment booking
+  const bookPat = document.getElementById('book-patient');
+  if (bookPat) bookPat.addEventListener('change', (e) => { state.bookingPatientId = Number(e.target.value); render(); });
+  const bookDoc = document.getElementById('book-doctor');
+  if (bookDoc) bookDoc.addEventListener('change', (e) => { state.bookingDoctorId = Number(e.target.value); render(); });
+  const bookReason = document.getElementById('book-reason');
+  if (bookReason) {
+    bookReason.addEventListener('input', (e) => {
+      state.bookingReason = e.target.value;
+      const sr = document.getElementById('summary-reason');
+      if (sr) sr.textContent = state.bookingReason || '—';
+    });
+  }
+  const calPrev = document.getElementById('cal-prev');
+  if (calPrev) calPrev.addEventListener('click', () => {
+    state.calMonth--;
+    if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+    state.calDay = 1;
+    render();
+  });
+  const calNext = document.getElementById('cal-next');
+  if (calNext) calNext.addEventListener('click', () => {
+    state.calMonth++;
+    if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+    state.calDay = 1;
+    render();
+  });
+  document.querySelectorAll('[data-cal-day]').forEach(btn => {
+    btn.addEventListener('click', () => { state.calDay = Number(btn.dataset.calDay); render(); });
+  });
+  document.querySelectorAll('[data-time-slot]').forEach(btn => {
+    btn.addEventListener('click', () => { state.bookingTime = btn.dataset.timeSlot; render(); });
+  });
+  const confirmBookBtn = document.getElementById('confirm-booking-btn');
+  if (confirmBookBtn) {
+    confirmBookBtn.addEventListener('click', async () => {
+      try {
+        const res = await api('/api/appointments', {
+          method: 'POST',
+          body: JSON.stringify({
+            patientId: state.bookingPatientId,
+            doctorId: state.bookingDoctorId,
+            date: selectedBookingDateStr(),
+            time: state.bookingTime,
+            reason: state.bookingReason.trim() || 'Consultation'
+          })
+        });
+        await refreshState();
+        showToast(`Appointment #${res.appointment.id} booked successfully!`);
+        navigate('appt-cancel');
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+
+  // Screen 07: Appointment cancellation
+  document.querySelectorAll('[data-cancel-tab]').forEach(btn => {
+    btn.addEventListener('click', () => { state.cancelTab = btn.dataset.cancelTab; render(); });
+  });
+  document.querySelectorAll('[data-select-cancel]').forEach(row => {
+    row.addEventListener('click', () => { state.selectedCancelApptId = Number(row.dataset.selectCancel); render(); });
+  });
+  const confirmCancelBtn = document.getElementById('confirm-cancel-appt-btn');
+  if (confirmCancelBtn) {
+    confirmCancelBtn.addEventListener('click', async () => {
+      const id = Number(confirmCancelBtn.dataset.aid);
+      const cancelReason = document.getElementById('cancel-reason')?.value.trim() || 'Cancelled by staff';
+      const note = document.getElementById('cancel-note')?.value.trim() || '';
+      try {
+        await api(`/api/appointments/${id}`, {
+          method: 'DELETE',
+          body: JSON.stringify({ cancelReason, note })
+        });
+        await refreshState();
+        showToast(`Appointment #${id} cancelled successfully.`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+  const keepBtn = document.getElementById('keep-appt-btn');
+  if (keepBtn) keepBtn.addEventListener('click', () => showToast('Appointment kept as scheduled.'));
+
+  // Screen 08: Doctor appointments
+  const activeDocSel = document.getElementById('active-doctor-select');
+  if (activeDocSel) {
+    activeDocSel.addEventListener('change', (e) => {
+      state.activeDoctorId = Number(e.target.value);
+      state.selectedDocApptId = null;
+      render();
+    });
+  }
+  document.querySelectorAll('[data-select-doc-appt]').forEach(row => {
+    row.addEventListener('click', () => { state.selectedDocApptId = Number(row.dataset.selectDocAppt); render(); });
+  });
+  document.querySelectorAll('[data-set-status]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await api('/api/appointments/status', {
+          method: 'POST',
+          body: JSON.stringify({ id: Number(btn.dataset.aid), status: btn.dataset.setStatus })
+        });
+        await refreshState();
+        showToast(`Appointment marked as ${btn.dataset.setStatus}.`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  });
+  const startConsultBtn = document.getElementById('start-consult-btn');
+  if (startConsultBtn) {
+    startConsultBtn.addEventListener('click', () => {
+      navigate('medical-record', {
+        patientId: Number(startConsultBtn.dataset.pid),
+        doctorId: Number(startConsultBtn.dataset.did)
+      });
+    });
+  }
+  const docHistBtn = document.getElementById('doc-view-history-btn');
+  if (docHistBtn) {
+    docHistBtn.addEventListener('click', () => showPatientRecordsModal(Number(docHistBtn.dataset.pid)));
+  }
+  const docProfileBtn = document.getElementById('view-doc-profile-btn');
+  if (docProfileBtn) {
+    docProfileBtn.addEventListener('click', () => {
+      const doc = getDoctor(state.activeDoctorId);
+      if (!doc) return;
+      openModal('Doctor Profile', `
+        <div class="summary-kv"><span class="k">Doctor ID</span><span class="v">#${doc.id}</span></div>
+        <div class="summary-kv"><span class="k">Name</span><span class="v">Dr. ${esc(doc.name)}</span></div>
+        <div class="summary-kv"><span class="k">Email</span><span class="v">${esc(doc.email)}</span></div>
+        <div class="summary-kv"><span class="k">Phone</span><span class="v">${esc(doc.phone)}</span></div>
+        <div class="summary-kv"><span class="k">Specialization</span><span class="v">${esc(doc.specialization)}</span></div>
+        <div class="summary-kv"><span class="k">Qualification</span><span class="v">${esc(doc.qualification)}</span></div>
+      `);
+    });
+  }
+
+  // Screen 09: Medical record
+  const recPat = document.getElementById('rec-patient-select');
+  if (recPat) recPat.addEventListener('change', (e) => { state.recordPatientId = Number(e.target.value); render(); });
+  const recDoc = document.getElementById('rec-doctor-select');
+  if (recDoc) recDoc.addEventListener('change', (e) => { state.recordDoctorId = Number(e.target.value); render(); });
+  const recForm = document.getElementById('medical-record-form');
+  if (recForm) {
+    recForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const after = e.submitter?.dataset?.after || 'stay';
+      try {
+        const res = await api('/api/records', {
+          method: 'POST',
+          body: JSON.stringify({
+            patientId: state.recordPatientId,
+            doctorId: state.recordDoctorId,
+            diagnosis: document.getElementById('rec-diagnosis').value.trim(),
+            symptoms: document.getElementById('rec-symptoms').value.trim(),
+            notes: document.getElementById('rec-notes').value.trim()
+          })
+        });
+        await refreshState();
+        showToast(`Medical record #${res.record.id} saved.`);
+        if (after === 'rx') {
+          navigate('prescription', { patientId: state.recordPatientId, doctorId: state.recordDoctorId });
+        } else {
+          render();
+        }
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+
+  // Screen 10: Prescription
+  const rxPat = document.getElementById('rx-patient-select');
+  if (rxPat) rxPat.addEventListener('change', (e) => { state.rxPatientId = Number(e.target.value); render(); });
+  const rxDoc = document.getElementById('rx-doctor-select');
+  if (rxDoc) rxDoc.addEventListener('change', (e) => { state.rxDoctorId = Number(e.target.value); render(); });
+
+  const syncRxPreview = () => {
+    const med = document.getElementById('rx-medicine')?.value || '';
+    const dose = document.getElementById('rx-dosage')?.value || '';
+    const dur = document.getElementById('rx-duration')?.value || '';
+    const inst = document.getElementById('rx-instructions')?.value || '';
+    const fu = document.getElementById('rx-followup')?.value || '';
+    state.rxDraft = { ...state.rxDraft, medicine: med, dosage: dose, duration: dur, instructions: inst, followUp: fu };
+    const pMed = document.getElementById('rx-prev-med');
+    const pDose = document.getElementById('rx-prev-dose');
+    const pInst = document.getElementById('rx-prev-inst');
+    const pFu = document.getElementById('rx-prev-fu');
+    if (pMed) pMed.innerHTML = `01 &nbsp;&nbsp;${esc(med || 'Medicine')}`;
+    if (pDose) pDose.textContent = `${dose || '—'} · ${dur || '—'}`;
+    if (pInst) pInst.textContent = inst || '—';
+    if (pFu) pFu.textContent = fu || '—';
+  };
+  ['rx-medicine', 'rx-dosage', 'rx-duration', 'rx-instructions', 'rx-followup'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncRxPreview);
+  });
+  const rxForm = document.getElementById('prescription-form');
+  if (rxForm) {
+    rxForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!document.getElementById('rx-reviewed').checked) {
+        showToast('Please confirm allergy & plan review before signing.', true);
+        return;
+      }
+      try {
+        const res = await api('/api/prescriptions', {
+          method: 'POST',
+          body: JSON.stringify({
+            patientId: state.rxPatientId,
+            doctorId: state.rxDoctorId,
+            medicine: state.rxDraft.medicine.trim(),
+            dosage: state.rxDraft.dosage.trim(),
+            duration: state.rxDraft.duration.trim(),
+            instructions: state.rxDraft.instructions.trim()
+          })
+        });
+        await refreshState();
+        showToast(`Prescription #${res.prescription.id} signed and saved!`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+
+  // Screen 11: Bill generation
+  const billPat = document.getElementById('bill-patient');
+  if (billPat) billPat.addEventListener('change', (e) => { state.billPatientId = Number(e.target.value); render(); });
+  const syncBillSummary = () => {
+    state.billFees.consultation = document.getElementById('fee-consult')?.value || '0';
+    state.billFees.medicine = document.getElementById('fee-medicine')?.value || '0';
+    state.billFees.test = document.getElementById('fee-test')?.value || '0';
+    state.billFees.note = document.getElementById('bill-note')?.value || '';
+    const c = parseFloat(state.billFees.consultation) || 0;
+    const m = parseFloat(state.billFees.medicine) || 0;
+    const t = parseFloat(state.billFees.test) || 0;
+    document.getElementById('sum-consult').textContent = formatRs(c);
+    document.getElementById('sum-medicine').textContent = formatRs(m);
+    document.getElementById('sum-test').textContent = formatRs(t);
+    document.getElementById('sum-total').textContent = formatRs(c + m + t);
+  };
+  ['fee-consult', 'fee-medicine', 'fee-test', 'bill-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncBillSummary);
+  });
+  const billStatus = document.getElementById('bill-status');
+  if (billStatus) billStatus.addEventListener('change', (e) => { state.billFees.status = e.target.value; });
+  const genBillBtn = document.getElementById('generate-bill-btn');
+  if (genBillBtn) {
+    genBillBtn.addEventListener('click', async () => {
+      try {
+        const res = await api('/api/bills', {
+          method: 'POST',
+          body: JSON.stringify({
+            patientId: state.billPatientId,
+            consultationFee: state.billFees.consultation || '0',
+            medicineFee: state.billFees.medicine || '0',
+            testFee: state.billFees.test || '0',
+            status: state.billFees.status
+          })
+        });
+        await refreshState();
+        state.selectedBillId = res.bill.id;
+        showToast(`Bill #${res.bill.id} generated (${formatRs(res.bill.total)}).`);
+        navigate('bill-view');
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+
+  // Screen 12: Bill viewing
+  document.querySelectorAll('[data-bill-filter]').forEach(btn => {
+    btn.addEventListener('click', () => { state.billFilter = btn.dataset.billFilter; render(); });
+  });
+  document.querySelectorAll('[data-select-bill]').forEach(row => {
+    row.addEventListener('click', () => { state.selectedBillId = Number(row.dataset.selectBill); render(); });
+  });
+  const retryBillsBtn = document.getElementById('retry-bills-btn');
+  if (retryBillsBtn) retryBillsBtn.addEventListener('click', async () => { await refreshState(); render(); });
+  const payBtn = document.getElementById('record-payment-btn');
+  if (payBtn) {
+    payBtn.addEventListener('click', async () => {
+      const id = Number(payBtn.dataset.bid);
+      try {
+        await api('/api/bills/pay', { method: 'POST', body: JSON.stringify({ id }) });
+        await refreshState();
+        showToast(`Payment recorded for BILL-${id}.`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  }
+  const dlBillBtn = document.getElementById('download-bill-btn');
+  if (dlBillBtn) {
+    dlBillBtn.addEventListener('click', () => {
+      const b = state.data.bills.find(x => x.id === Number(dlBillBtn.dataset.bid));
+      if (!b) return;
+      const pt = getPatient(b.patientId);
+      const txt = [
+        'WELLNEST — SMART CLINIC MANAGEMENT SYSTEM',
+        `INVOICE: BILL-${b.id} (${b.paid ? 'PAID' : 'UNPAID'})`,
+        `Patient: ${pt ? pt.name : 'ID ' + b.patientId} (PT-${b.patientId})`,
+        '----------------------------------------',
+        `Consultation Fee : ${formatRs(b.consultationFee)}`,
+        `Medicine Fee     : ${formatRs(b.medicineFee)}`,
+        `Test Fee         : ${formatRs(b.testFee)}`,
+        '----------------------------------------',
+        `TOTAL            : ${formatRs(b.total)}`
+      ].join('\n');
+      downloadText(`BILL-${b.id}.txt`, txt, 'text/plain');
+      showToast(`Downloaded BILL-${b.id}.txt`);
+    });
+  }
+}
+
+function downloadText(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// BOOTSTRAP
+// ============================================================
+(async function init() {
+  await refreshState();
+  render();
+})();
