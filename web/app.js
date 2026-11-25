@@ -49,6 +49,7 @@ const state = {
   // Per-screen UI state
   doctorSearch: '',
   doctorSpecialtyFilter: 'ALL',
+  editingDoctorId: null,
   patientSearchQuery: '',
   selectedPatientId: null,
   regErrors: {},
@@ -92,6 +93,7 @@ const state = {
   billPatientId: null,
   billFees: { consultation: '', medicine: '', test: '', status: 'unpaid', note: '' },
   billFilter: 'all',
+  billSearch: '',
   selectedBillId: null,
   billRefreshError: false
 };
@@ -499,12 +501,20 @@ function renderWorkspaceShell() {
           <div class="clinic-selector-loc">Main clinic · SCD Project</div>
         </div>
         <nav class="sidebar-nav">
-          ${NAV_ITEMS.map(item => `
-            <button class="nav-item ${item.match.includes(state.screen) ? 'active' : ''}" data-nav="${item.screen}">
-              <span class="nav-num">${item.num}</span>
-              <span class="nav-label">${item.label}</span>
-            </button>
-          `).join('')}
+          ${NAV_ITEMS.map(item => {
+            const count = item.screen === 'patient-search' ? state.data.stats.totalPatients
+              : item.screen === 'appt-book' ? state.data.stats.totalAppointments
+              : item.screen === 'doctors' ? state.data.stats.totalDoctors
+              : item.screen === 'bill-view' ? state.data.stats.totalBills
+              : null;
+            return `
+              <button class="nav-item ${item.match.includes(state.screen) ? 'active' : ''}" data-nav="${item.screen}">
+                <span class="nav-num">${item.num}</span>
+                <span class="nav-label">${item.label}</span>
+                ${count !== null ? `<span class="nav-badge">${count}</span>` : ''}
+              </button>
+            `;
+          }).join('')}
         </nav>
         <div class="sidebar-spacer"></div>
         <div class="sidebar-support">
@@ -522,6 +532,10 @@ function renderWorkspaceShell() {
         <header class="top-bar">
           <div>Workspace &nbsp;&nbsp;/&nbsp;&nbsp; ${esc(meta.crumb)}</div>
           <div class="top-bar-right">
+            <button type="button" class="quick-search-trigger" id="open-cmd-palette-btn">
+              <span>Quick search patients, doctors, screens...</span>
+              <span class="kbd-hint">Ctrl K</span>
+            </button>
             <span>${esc(portalLabel)} &nbsp;&nbsp;·&nbsp;&nbsp; ${esc(todayStr)}</span>
           </div>
         </header>
@@ -553,14 +567,24 @@ function renderStatsScreen() {
   const cancelledCount = stats.cancelledAppointments;
   const totalVol = Math.max(1, completedCount + waitingCount + cancelledCount);
 
-  const dayCounts = [0, 0, appointments.length, 0, 0, 0, 0];
+  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+  appointments.forEach(a => {
+    const parts = String(a.date || '').split('-').map(Number);
+    if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+      const dt = new Date(parts[2], parts[1] - 1, parts[0]);
+      const wd = (dt.getDay() + 6) % 7; // Mon=0 .. Sun=6
+      dayCounts[wd]++;
+    }
+  });
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const maxBar = Math.max(...dayCounts, 1);
+  const peakIdx = dayCounts.indexOf(Math.max(...dayCounts));
 
   return `
     <div class="controls-row">
       <span class="eyebrow-date">LIVE SYSTEM METRICS · ${stats.totalMedicalRecords} RECORDS · ${stats.totalPrescriptions} PRESCRIPTIONS</span>
-      <div style="display:flex;gap:12px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn-secondary" id="export-clinic-report-btn">Export report</button>
         <button class="btn-secondary" data-nav="doctors">+ Add doctor</button>
         <button class="btn-secondary" data-nav="patient-register">+ Register patient</button>
         <button class="btn-primary" data-nav="appt-book">Book appointment</button>
@@ -737,6 +761,7 @@ function renderDoctorsScreen() {
                     <td style="color:var(--muted);">${count} ${count === 1 ? 'visit' : 'visits'}</td>
                     <td>
                       <div style="display:flex;gap:12px;">
+                        <button class="link-btn" data-edit-doctor="${d.id}">Edit</button>
                         <button class="link-btn" data-doc-schedule="${d.id}">Schedule</button>
                         <button class="link-btn" style="color:var(--danger);" data-delete-doctor="${d.id}">Delete</button>
                       </div>
@@ -754,41 +779,46 @@ function renderDoctorsScreen() {
       </div>
 
       <div class="card split-right" style="display:flex;flex-direction:column;gap:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <h3 style="font-size:19px;font-weight:600;color:var(--ink);">Add doctor</h3>
-          <span style="font-size:10px;font-weight:600;color:var(--primary);letter-spacing:0.6px;">NEW</span>
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-top:-8px;">Add a new doctor to your clinic care team.</p>
+        ${(() => {
+          const ed = state.editingDoctorId ? getDoctor(state.editingDoctorId) : null;
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h3 style="font-size:19px;font-weight:600;color:var(--ink);">${ed ? 'Edit doctor' : 'Add doctor'}</h3>
+              <span style="font-size:10px;font-weight:600;color:var(--primary);letter-spacing:0.6px;">${ed ? 'ID #' + ed.id : 'NEW'}</span>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-top:-8px;">${ed ? 'Update doctor profile details and save changes.' : 'Add a new doctor to your clinic care team.'}</p>
 
-        <form id="add-doctor-form" style="display:flex;flex-direction:column;gap:14px;">
-          <div class="field-group">
-            <label for="doc-name">Full name *</label>
-            <input id="doc-name" class="field-input" type="text" placeholder="e.g. Dr. Bilal Hassan" required />
-          </div>
-          <div class="field-group">
-            <label for="doc-email">Work email *</label>
-            <input id="doc-email" class="field-input" type="email" placeholder="doctor@clinic.com" required />
-          </div>
-          <div class="field-group">
-            <label for="doc-phone">Phone number *</label>
-            <input id="doc-phone" class="field-input" type="text" placeholder="03001234567" required />
-          </div>
-          <div class="form-row-2">
-            <div class="field-group">
-              <label for="doc-spec">Specialization *</label>
-              <input id="doc-spec" class="field-input" type="text" placeholder="e.g. Neurologist" required />
-            </div>
-            <div class="field-group">
-              <label for="doc-qual">Qualification *</label>
-              <input id="doc-qual" class="field-input" type="text" placeholder="e.g. MBBS, FCPS" required />
-            </div>
-          </div>
-          <p style="font-size:11px;color:var(--muted);">A unique Doctor ID will be automatically assigned upon creation.</p>
-          <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:4px;">
-            <button type="reset" class="btn-secondary">Cancel</button>
-            <button type="submit" class="btn-primary">Add doctor</button>
-          </div>
-        </form>
+            <form id="add-doctor-form" style="display:flex;flex-direction:column;gap:14px;">
+              <div class="field-group">
+                <label for="doc-name">Full name *</label>
+                <input id="doc-name" class="field-input" type="text" value="${esc(ed ? ed.name : '')}" placeholder="e.g. Bilal Hassan" required />
+              </div>
+              <div class="field-group">
+                <label for="doc-email">Work email *</label>
+                <input id="doc-email" class="field-input" type="email" value="${esc(ed ? ed.email : '')}" placeholder="doctor@clinic.com" required />
+              </div>
+              <div class="field-group">
+                <label for="doc-phone">Phone number *</label>
+                <input id="doc-phone" class="field-input" type="text" value="${esc(ed ? ed.phone : '')}" placeholder="03001234567" required />
+              </div>
+              <div class="form-row-2">
+                <div class="field-group">
+                  <label for="doc-spec">Specialization *</label>
+                  <input id="doc-spec" class="field-input" type="text" value="${esc(ed ? ed.specialization : '')}" placeholder="e.g. Neurologist" required />
+                </div>
+                <div class="field-group">
+                  <label for="doc-qual">Qualification *</label>
+                  <input id="doc-qual" class="field-input" type="text" value="${esc(ed ? ed.qualification : '')}" placeholder="e.g. MBBS, FCPS" required />
+                </div>
+              </div>
+              <p style="font-size:11px;color:var(--muted);">${ed ? 'Changes are saved immediately to clinic storage.' : 'A unique Doctor ID will be automatically assigned upon creation.'}</p>
+              <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:4px;">
+                <button type="button" class="btn-secondary" id="cancel-edit-doc-btn">Cancel</button>
+                <button type="submit" class="btn-primary">${ed ? 'Save changes' : 'Add doctor'}</button>
+              </div>
+            </form>
+          `;
+        })()}
       </div>
     </div>
   `;
@@ -828,6 +858,7 @@ function renderPatientSearchScreen() {
                type="text" value="${esc(state.patientSearchQuery)}" placeholder="Search by patient name, ID (e.g. 1001), phone, or city..." />
         ${state.patientSearchQuery ? `<button id="clear-patient-search" class="link-btn" style="position:absolute;right:16px;">Clear</button>` : ''}
       </div>
+      <button class="btn-secondary" id="export-patients-btn">Export CSV</button>
       <button class="btn-secondary" id="show-all-patients-btn">All patients (${patients.length})</button>
       <button class="btn-primary" data-nav="patient-register">+ Register patient</button>
     </div>
@@ -910,6 +941,10 @@ function renderPatientSearchScreen() {
           <div style="display:flex;gap:12px;margin-top:4px;">
             <button class="btn-secondary" style="flex:1;" id="view-patient-records-btn" data-pid="${selected.id}">View records</button>
             <button class="btn-primary" style="flex:1;" id="book-for-patient-btn" data-pid="${selected.id}">Book visit</button>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn-secondary" style="flex:1;height:36px;font-size:12px;" id="edit-patient-btn" data-pid="${selected.id}">Edit profile</button>
+            <button class="btn-secondary" style="flex:1;height:36px;font-size:12px;color:var(--danger);" id="delete-patient-btn" data-pid="${selected.id}">Delete patient</button>
           </div>
         `}
       </div>
@@ -1307,6 +1342,7 @@ function renderAppointmentCancelScreen() {
           <button type="button" class="btn-danger btn-full" id="confirm-cancel-appt-btn" data-aid="${selected.id}">
             Cancel appointment
           </button>
+          <button type="button" class="btn-secondary btn-full" id="reschedule-appt-btn" data-aid="${selected.id}">Reschedule date / time</button>
           <button type="button" class="btn-secondary btn-full" id="keep-appt-btn">Keep appointment</button>
           <span style="font-size:10px;color:var(--muted);">Nothing changes until you confirm.</span>
         `}
@@ -1464,6 +1500,12 @@ function renderMedicalRecordScreen() {
           <span style="font-size:11px;color:var(--muted);">Attending: Dr. ${esc(d ? d.name : '—')}</span>
         </div>
 
+        <div class="chip-row">
+          <button type="button" class="preset-chip" data-rec-tpl="checkup">Template: Routine checkup</button>
+          <button type="button" class="preset-chip" data-rec-tpl="flu">Template: Viral fever / Flu</button>
+          <button type="button" class="preset-chip" data-rec-tpl="bp">Template: Hypertension review</button>
+        </div>
+
         <form id="medical-record-form" style="display:flex;flex-direction:column;gap:16px;">
           <div class="field-group">
             <label for="rec-diagnosis">Diagnosis *</label>
@@ -1554,6 +1596,12 @@ function renderPrescriptionScreen() {
     <div class="split-layout">
       <div class="card split-left" style="display:flex;flex-direction:column;gap:16px;">
         <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Medication builder</h3>
+
+        <div class="chip-row">
+          <button type="button" class="preset-chip" data-rx-preset="od">Once daily · 14 days</button>
+          <button type="button" class="preset-chip" data-rx-preset="bd">Twice daily · 7 days</button>
+          <button type="button" class="preset-chip" data-rx-preset="tds">3× daily · 5 days</button>
+        </div>
 
         <form id="prescription-form" style="display:flex;flex-direction:column;gap:15px;">
           <div class="field-group">
@@ -1744,8 +1792,14 @@ function renderBillViewScreen() {
   const { bills, stats } = state.data;
   const f = state.billFilter;
   const filtered = bills.filter(b => {
-    if (f === 'paid') return b.paid;
-    if (f === 'unpaid') return !b.paid;
+    if (f === 'paid' && !b.paid) return false;
+    if (f === 'unpaid' && b.paid) return false;
+    const bq = state.billSearch.trim().toLowerCase();
+    if (bq) {
+      const pt = getPatient(b.patientId);
+      const hit = String(b.id).includes(bq) || String(b.patientId).includes(bq) || (pt && pt.name.toLowerCase().includes(bq));
+      if (!hit) return false;
+    }
     return true;
   }).slice().reverse();
 
@@ -1770,6 +1824,9 @@ function renderBillViewScreen() {
           <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Recent invoices</h3>
           <span style="font-size:11px;font-weight:600;color:var(--primary);">Grand total: ${formatRs(stats.totalRevenue)}</span>
         </div>
+
+        <input id="bill-search-input" class="field-input" style="height:38px;font-size:12px;" type="text"
+               value="${esc(state.billSearch)}" placeholder="Filter by bill ID or patient name..." />
 
         <div style="display:flex;gap:22px;padding-bottom:6px;border-bottom:1px solid var(--border-card);">
           <button class="role-tab ${f === 'all' ? 'active' : ''}" style="padding-bottom:8px;" data-bill-filter="all">All (${bills.length})</button>
@@ -1798,7 +1855,10 @@ function renderBillViewScreen() {
 
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px;">
           <span style="font-size:11px;color:var(--muted);">Showing ${filtered.length} of ${bills.length} bills</span>
-          <button class="link-btn" data-nav="bill-generate">+ New bill</button>
+          <div style="display:flex;gap:12px;">
+            <button class="link-btn" id="export-bills-btn">Export CSV</button>
+            <button class="link-btn" data-nav="bill-generate">+ New bill</button>
+          </div>
         </div>
       </div>
 
@@ -1970,6 +2030,32 @@ function bindWorkspaceEvents() {
     el.addEventListener('click', () => navigate(el.dataset.nav));
   });
 
+  const cmdBtn = document.getElementById('open-cmd-palette-btn');
+  if (cmdBtn) cmdBtn.addEventListener('click', openCommandPalette);
+
+  const exportReportBtn = document.getElementById('export-clinic-report-btn');
+  if (exportReportBtn) {
+    exportReportBtn.addEventListener('click', () => {
+      const s = state.data.stats;
+      const lines = [
+        'SMART CLINIC MANAGEMENT SYSTEM — SUMMARY REPORT',
+        `Generated: ${new Date().toLocaleString()}`,
+        '--------------------------------------------------',
+        `Total Doctors        : ${s.totalDoctors}`,
+        `Total Patients       : ${s.totalPatients}`,
+        `Active Appointments  : ${s.totalAppointments}`,
+        `Cancelled Visits     : ${s.cancelledAppointments}`,
+        `Medical Records      : ${s.totalMedicalRecords}`,
+        `Prescriptions Issued : ${s.totalPrescriptions}`,
+        `Generated Bills      : ${s.totalBills} (${s.paidBills} paid)`,
+        `Total Revenue        : ${formatRs(s.totalRevenue)}`,
+        `Collected Revenue    : ${formatRs(s.paidRevenue)}`
+      ];
+      downloadText('smart-clinic-report.txt', lines.join('\n'), 'text/plain');
+      showToast('Exported smart-clinic-report.txt');
+    });
+  }
+
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -2037,6 +2123,19 @@ function bindWorkspaceEvents() {
       showToast('Exported doctors.csv');
     });
   }
+  document.querySelectorAll('[data-edit-doctor]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.editingDoctorId = Number(btn.dataset.editDoctor);
+      render();
+    });
+  });
+  const cancelEditDocBtn = document.getElementById('cancel-edit-doc-btn');
+  if (cancelEditDocBtn) {
+    cancelEditDocBtn.addEventListener('click', () => {
+      state.editingDoctorId = null;
+      render();
+    });
+  }
   document.querySelectorAll('[data-doc-schedule]').forEach(btn => {
     btn.addEventListener('click', () => navigate('doctor-appts', { doctorId: Number(btn.dataset.docSchedule) }));
   });
@@ -2048,6 +2147,7 @@ function bindWorkspaceEvents() {
       if (!confirm(`Delete Dr. ${doc.name} (ID #${doc.id})?`)) return;
       try {
         await api(`/api/doctors/${id}`, { method: 'DELETE' });
+        if (state.editingDoctorId === id) state.editingDoctorId = null;
         await refreshState();
         showToast(`Dr. ${doc.name} deleted successfully.`);
         render();
@@ -2068,9 +2168,17 @@ function bindWorkspaceEvents() {
         qualification: document.getElementById('doc-qual').value.trim()
       };
       try {
-        const res = await api('/api/doctors', { method: 'POST', body: JSON.stringify(payload) });
-        await refreshState();
-        showToast(`Doctor added! Assigned ID: ${res.doctor.id}`);
+        if (state.editingDoctorId) {
+          await api(`/api/doctors/${state.editingDoctorId}`, { method: 'PUT', body: JSON.stringify(payload) });
+          const updatedId = state.editingDoctorId;
+          state.editingDoctorId = null;
+          await refreshState();
+          showToast(`Doctor #${updatedId} updated successfully.`);
+        } else {
+          const res = await api('/api/doctors', { method: 'POST', body: JSON.stringify(payload) });
+          await refreshState();
+          showToast(`Doctor added! Assigned ID: ${res.doctor.id}`);
+        }
         render();
       } catch (err) {
         showToast(err.message, true);
@@ -2109,6 +2217,37 @@ function bindWorkspaceEvents() {
   const bookForPatBtn = document.getElementById('book-for-patient-btn');
   if (bookForPatBtn) {
     bookForPatBtn.addEventListener('click', () => navigate('appt-book', { patientId: Number(bookForPatBtn.dataset.pid) }));
+  }
+  const exportPatBtn = document.getElementById('export-patients-btn');
+  if (exportPatBtn) {
+    exportPatBtn.addEventListener('click', () => {
+      const rows = [['ID', 'Name', 'Email', 'Phone', 'Age', 'Gender', 'Address']];
+      state.data.patients.forEach(p => rows.push([p.id, p.name, p.email, p.phone, p.age, p.gender, p.address]));
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      downloadText('patients.csv', csv, 'text/csv');
+      showToast('Exported patients.csv');
+    });
+  }
+  const editPatBtn = document.getElementById('edit-patient-btn');
+  if (editPatBtn) {
+    editPatBtn.addEventListener('click', () => openEditPatientModal(Number(editPatBtn.dataset.pid)));
+  }
+  const delPatBtn = document.getElementById('delete-patient-btn');
+  if (delPatBtn) {
+    delPatBtn.addEventListener('click', async () => {
+      const id = Number(delPatBtn.dataset.pid);
+      const pt = getPatient(id);
+      if (!pt || !confirm(`Delete patient ${pt.name} (PT-${pt.id})?`)) return;
+      try {
+        await api(`/api/patients/${id}`, { method: 'DELETE' });
+        state.selectedPatientId = null;
+        await refreshState();
+        showToast(`Patient PT-${id} deleted.`);
+        render();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
   }
 
   // Screen 05: Patient registration
@@ -2236,6 +2375,10 @@ function bindWorkspaceEvents() {
       }
     });
   }
+  const rescheduleBtn = document.getElementById('reschedule-appt-btn');
+  if (rescheduleBtn) {
+    rescheduleBtn.addEventListener('click', () => openRescheduleModal(Number(rescheduleBtn.dataset.aid)));
+  }
   const keepBtn = document.getElementById('keep-appt-btn');
   if (keepBtn) keepBtn.addEventListener('click', () => showToast('Appointment kept as scheduled.'));
 
@@ -2300,6 +2443,21 @@ function bindWorkspaceEvents() {
   if (recPat) recPat.addEventListener('change', (e) => { state.recordPatientId = Number(e.target.value); render(); });
   const recDoc = document.getElementById('rec-doctor-select');
   if (recDoc) recDoc.addEventListener('change', (e) => { state.recordDoctorId = Number(e.target.value); render(); });
+  document.querySelectorAll('[data-rec-tpl]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tpls = {
+        checkup: { d: 'Routine Health Examination', s: 'General wellness check; no acute complaints.', n: 'Vitals stable. Advised balanced diet, regular exercise, and annual follow-up.' },
+        flu: { d: 'Acute Viral Upper Respiratory Infection', s: 'Fever, mild cough, sore throat, and body aches for 2 days.', n: 'Hydration, rest, and symptomatic relief. Return if fever persists beyond 72 hours.' },
+        bp: { d: 'Essential Hypertension Follow-up', s: 'Periodic blood pressure monitoring; occasional morning headache.', n: 'Maintain low-sodium diet, daily BP log, and review in 2 weeks.' }
+      };
+      const t = tpls[btn.dataset.recTpl];
+      if (!t) return;
+      document.getElementById('rec-diagnosis').value = t.d;
+      document.getElementById('rec-symptoms').value = t.s;
+      document.getElementById('rec-notes').value = t.n;
+      showToast('Clinical template applied.');
+    });
+  });
   const recForm = document.getElementById('medical-record-form');
   if (recForm) {
     recForm.addEventListener('submit', async (e) => {
@@ -2354,6 +2512,21 @@ function bindWorkspaceEvents() {
   ['rx-medicine', 'rx-dosage', 'rx-duration', 'rx-instructions', 'rx-followup'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', syncRxPreview);
+  });
+  document.querySelectorAll('[data-rx-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const presets = {
+        od: { dosage: '1 tablet once daily', duration: '14 days', instructions: 'Take 1 tablet by mouth once daily after breakfast.' },
+        bd: { dosage: '1 tablet twice daily', duration: '7 days', instructions: 'Take 1 tablet morning and evening after meals.' },
+        tds: { dosage: '1 tablet three times daily', duration: '5 days', instructions: 'Take 1 tablet every 8 hours with water.' }
+      };
+      const pr = presets[btn.dataset.rxPreset];
+      if (!pr) return;
+      document.getElementById('rx-dosage').value = pr.dosage;
+      document.getElementById('rx-duration').value = pr.duration;
+      document.getElementById('rx-instructions').value = pr.instructions;
+      syncRxPreview();
+    });
   });
   const rxForm = document.getElementById('prescription-form');
   if (rxForm) {
@@ -2431,6 +2604,28 @@ function bindWorkspaceEvents() {
   }
 
   // Screen 12: Bill viewing
+  const billSearch = document.getElementById('bill-search-input');
+  if (billSearch) {
+    billSearch.addEventListener('input', (e) => {
+      state.billSearch = e.target.value;
+      render();
+      const inp = document.getElementById('bill-search-input');
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    });
+  }
+  const exportBillsBtn = document.getElementById('export-bills-btn');
+  if (exportBillsBtn) {
+    exportBillsBtn.addEventListener('click', () => {
+      const rows = [['Bill ID', 'Patient ID', 'Patient Name', 'Consultation', 'Medicine', 'Test', 'Total', 'Status']];
+      state.data.bills.forEach(b => {
+        const pt = getPatient(b.patientId);
+        rows.push([b.id, b.patientId, pt ? pt.name : '', b.consultationFee, b.medicineFee, b.testFee, b.total, b.paid ? 'Paid' : 'Unpaid']);
+      });
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      downloadText('bills.csv', csv, 'text/csv');
+      showToast('Exported bills.csv');
+    });
+  }
   document.querySelectorAll('[data-bill-filter]').forEach(btn => {
     btn.addEventListener('click', () => { state.billFilter = btn.dataset.billFilter; render(); });
   });
@@ -2484,6 +2679,161 @@ function downloadText(filename, content, mime) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+function openEditPatientModal(patientId) {
+  const p = getPatient(patientId);
+  if (!p) return;
+  openModal(`Edit Patient · PT-${p.id}`, `
+    <form id="edit-patient-form" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="field-group"><label>Full name *</label><input id="ep-name" class="field-input" value="${esc(p.name)}" required /></div>
+      <div class="form-row-2">
+        <div class="field-group"><label>Age *</label><input id="ep-age" class="field-input" type="number" min="1" max="130" value="${p.age}" required /></div>
+        <div class="field-group"><label>Gender *</label>
+          <select id="ep-gender" class="field-select">
+            <option value="Male" ${p.gender === 'Male' ? 'selected' : ''}>Male</option>
+            <option value="Female" ${p.gender === 'Female' ? 'selected' : ''}>Female</option>
+            <option value="Other" ${p.gender === 'Other' ? 'selected' : ''}>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="field-group"><label>Phone *</label><input id="ep-phone" class="field-input" value="${esc(p.phone)}" required /></div>
+        <div class="field-group"><label>Email *</label><input id="ep-email" class="field-input" type="email" value="${esc(p.email)}" required /></div>
+      </div>
+      <div class="field-group"><label>Home address *</label><input id="ep-address" class="field-input" value="${esc(p.address)}" required /></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+        <button type="button" class="btn-secondary" id="ep-cancel">Cancel</button>
+        <button type="submit" class="btn-primary">Save changes</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('ep-cancel').addEventListener('click', closeModal);
+  document.getElementById('edit-patient-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await api(`/api/patients/${p.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: document.getElementById('ep-name').value.trim(),
+          age: document.getElementById('ep-age').value.trim(),
+          gender: document.getElementById('ep-gender').value,
+          phone: document.getElementById('ep-phone').value.trim(),
+          email: document.getElementById('ep-email').value.trim(),
+          address: document.getElementById('ep-address').value.trim()
+        })
+      });
+      closeModal();
+      await refreshState();
+      showToast(`Patient PT-${p.id} updated.`);
+      render();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
+function openRescheduleModal(apptId) {
+  const a = state.data.appointments.find(x => x.id === apptId);
+  if (!a) return;
+  openModal(`Reschedule Appointment · APT-${a.id}`, `
+    <form id="resched-form" style="display:flex;flex-direction:column;gap:14px;">
+      <div class="field-group"><label>Doctor *</label>
+        <select id="rs-doctor" class="field-select">
+          ${state.data.doctors.map(d => `<option value="${d.id}" ${d.id === a.doctorId ? 'selected' : ''}>Dr. ${esc(d.name)} · ${esc(d.specialization)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row-2">
+        <div class="field-group"><label>New Date (dd-MM-yyyy) *</label><input id="rs-date" class="field-input" value="${esc(a.date)}" required /></div>
+        <div class="field-group"><label>New Time *</label>
+          <select id="rs-time" class="field-select">
+            ${TIME_SLOTS.map(t => `<option value="${t}" ${t === a.time ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field-group"><label>Reason *</label><input id="rs-reason" class="field-input" value="${esc(a.reason)}" required /></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+        <button type="button" class="btn-secondary" id="rs-cancel">Cancel</button>
+        <button type="submit" class="btn-primary">Save new schedule</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('rs-cancel').addEventListener('click', closeModal);
+  document.getElementById('resched-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await api(`/api/appointments/${a.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          doctorId: document.getElementById('rs-doctor').value,
+          date: document.getElementById('rs-date').value.trim(),
+          time: document.getElementById('rs-time').value,
+          reason: document.getElementById('rs-reason').value.trim()
+        })
+      });
+      closeModal();
+      await refreshState();
+      showToast(`Appointment APT-${a.id} rescheduled.`);
+      render();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  });
+}
+
+function openCommandPalette() {
+  if (!state.session) return;
+  openModal('Quick Search & Jump (Ctrl+K)', `
+    <input id="cmd-input" class="field-input" type="text" placeholder="Type a patient name, doctor, screen, or ID..." autofocus />
+    <div id="cmd-results" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;"></div>
+  `);
+  const renderCmd = (q) => {
+    const term = q.trim().toLowerCase();
+    const items = [];
+    Object.entries(SCREEN_META).forEach(([key, m]) => {
+      if (!term || m.title.toLowerCase().includes(term)) {
+        items.push({ label: m.title, sub: 'Screen', action: () => { closeModal(); navigate(key); } });
+      }
+    });
+    state.data.patients.forEach(p => {
+      if (!term || p.name.toLowerCase().includes(term) || String(p.id).includes(term) || p.phone.includes(term)) {
+        items.push({ label: `${p.name} (PT-${p.id})`, sub: `Patient · ${p.phone}`, action: () => { closeModal(); navigate('patient-search', { patientId: p.id }); } });
+      }
+    });
+    state.data.doctors.forEach(d => {
+      if (!term || d.name.toLowerCase().includes(term) || String(d.id).includes(term) || d.specialization.toLowerCase().includes(term)) {
+        items.push({ label: `Dr. ${d.name} (#${d.id})`, sub: `Doctor · ${d.specialization}`, action: () => { closeModal(); navigate('doctor-appts', { doctorId: d.id }); } });
+      }
+    });
+    const box = document.getElementById('cmd-results');
+    if (!box) return;
+    if (items.length === 0) {
+      box.innerHTML = '<div class="empty-state">No matching screens, patients, or doctors.</div>';
+      return;
+    }
+    box.innerHTML = items.slice(0, 12).map((it, idx) => `
+      <div class="cmd-item" data-cmd-idx="${idx}">
+        <span style="font-size:13px;font-weight:500;color:var(--ink);">${esc(it.label)}</span>
+        <span style="font-size:11px;color:var(--muted);">${esc(it.sub)}</span>
+      </div>
+    `).join('');
+    box.querySelectorAll('[data-cmd-idx]').forEach(el => {
+      el.addEventListener('click', () => items[Number(el.dataset.cmdIdx)].action());
+    });
+  };
+  const inp = document.getElementById('cmd-input');
+  inp.addEventListener('input', () => renderCmd(inp.value));
+  renderCmd('');
+  inp.focus();
+}
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    openCommandPalette();
+  } else if (e.key === 'Escape') {
+    closeModal();
+  }
+});
 
 // ============================================================
 // BOOTSTRAP
