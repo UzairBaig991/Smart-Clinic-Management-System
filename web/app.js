@@ -696,3 +696,602 @@ function renderDoctorsScreen() {
           <div>
             <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Your care team</h3>
             <p style="font-size:12px;color:var(--muted);margin-top:6px;">${doctors.length} registered doctors Â· All active</p>
+          </div>
+          <button class="btn-secondary" id="export-doctors-btn">Export list</button>
+        </div>
+
+        <div style="display:flex;gap:12px;">
+          <input id="doctor-search-input" class="field-input" style="height:42px;flex:1;" type="text"
+                 value="${esc(state.doctorSearch)}" placeholder="Search by ID, name, or specialty" />
+          <select id="doctor-spec-filter" class="field-select" style="height:42px;width:190px;">
+            <option value="ALL">All specialties</option>
+            ${specialties.map(sp => `<option value="${esc(sp)}" ${state.doctorSpecialtyFilter === sp ? 'selected' : ''}>${esc(sp)}</option>`).join('')}
+          </select>
+        </div>
+
+        ${filtered.length === 0 ? `<div class="empty-state">No doctors match your search criteria.</div>` : `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>DOCTOR</th>
+                <th>CONTACT</th>
+                <th>STATUS</th>
+                <th>VISITS</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(d => {
+                const count = appointments.filter(a => a.doctorId === d.id).length;
+                return `
+                  <tr>
+                    <td>
+                      <div style="font-weight:500;font-size:13px;">Dr. ${esc(d.name)} <span style="color:var(--muted);font-size:11px;">#${d.id}</span></div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${esc(d.specialization)} Â· ${esc(d.qualification)}</div>
+                    </td>
+                    <td>
+                      <div style="font-size:12px;">${esc(d.email)}</div>
+                      <div style="font-size:11px;color:var(--muted);margin-top:2px;">${esc(d.phone)}</div>
+                    </td>
+                    <td><span class="pill pill-green">Available</span></td>
+                    <td style="color:var(--muted);">${count} ${count === 1 ? 'visit' : 'visits'}</td>
+                    <td>
+                      <div style="display:flex;gap:12px;">
+                        <button class="link-btn" data-doc-schedule="${d.id}">Schedule</button>
+                        <button class="link-btn" style="color:var(--danger);" data-delete-doctor="${d.id}">Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;">
+          <span style="font-size:11px;color:var(--muted);">Showing ${filtered.length} of ${doctors.length} doctors</span>
+        </div>
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:19px;font-weight:600;color:var(--ink);">Add doctor</h3>
+          <span style="font-size:10px;font-weight:600;color:var(--primary);letter-spacing:0.6px;">NEW</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:-8px;">Add a new doctor to your clinic care team.</p>
+
+        <form id="add-doctor-form" style="display:flex;flex-direction:column;gap:14px;">
+          <div class="field-group">
+            <label for="doc-name">Full name *</label>
+            <input id="doc-name" class="field-input" type="text" placeholder="e.g. Dr. Bilal Hassan" required />
+          </div>
+          <div class="field-group">
+            <label for="doc-email">Work email *</label>
+            <input id="doc-email" class="field-input" type="email" placeholder="doctor@clinic.com" required />
+          </div>
+          <div class="field-group">
+            <label for="doc-phone">Phone number *</label>
+            <input id="doc-phone" class="field-input" type="text" placeholder="03001234567" required />
+          </div>
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="doc-spec">Specialization *</label>
+              <input id="doc-spec" class="field-input" type="text" placeholder="e.g. Neurologist" required />
+            </div>
+            <div class="field-group">
+              <label for="doc-qual">Qualification *</label>
+              <input id="doc-qual" class="field-input" type="text" placeholder="e.g. MBBS, FCPS" required />
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--muted);">A unique Doctor ID will be automatically assigned upon creation.</p>
+          <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:4px;">
+            <button type="reset" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Add doctor</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 04 Â· PATIENT SEARCH
+// ============================================================
+
+function renderPatientSearchScreen() {
+  const { patients, appointments, medicalRecords } = state.data;
+  const q = state.patientSearchQuery.trim().toLowerCase();
+
+  const filtered = patients.filter(p => {
+    if (!q) return true;
+    return String(p.id).includes(q)
+      || p.name.toLowerCase().includes(q)
+      || p.phone.toLowerCase().includes(q)
+      || p.email.toLowerCase().includes(q)
+      || p.address.toLowerCase().includes(q);
+  });
+
+  let selected = filtered.find(p => p.id === state.selectedPatientId) || filtered[0] || null;
+  if (selected) state.selectedPatientId = selected.id;
+
+  const nextAppt = selected
+    ? appointments.find(a => a.patientId === selected.id)
+    : null;
+  const recCount = selected
+    ? medicalRecords.filter(r => r.patientId === selected.id).length
+    : 0;
+
+  return `
+    <div style="display:flex;gap:14px;align-items:center;width:100%;">
+      <div style="flex:1;position:relative;display:flex;align-items:center;">
+        <input id="patient-search-input" class="field-input" style="height:48px;border-color:var(--border-focus);padding-right:70px;font-size:14px;"
+               type="text" value="${esc(state.patientSearchQuery)}" placeholder="Search by patient name, ID (e.g. 1001), phone, or city..." />
+        ${state.patientSearchQuery ? `<button id="clear-patient-search" class="link-btn" style="position:absolute;right:16px;">Clear</button>` : ''}
+      </div>
+      <button class="btn-secondary" id="show-all-patients-btn">All patients (${patients.length})</button>
+      <button class="btn-primary" data-nav="patient-register">+ Register patient</button>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">Search results</h3>
+          <span style="font-size:12px;color:var(--muted);">${filtered.length} ${filtered.length === 1 ? 'patient' : 'patients'} found</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:-6px;">
+          ${q ? `Matching â€œ${esc(state.patientSearchQuery)}â€ Â· ` : ''}Search by name, patient ID, phone, or email
+        </p>
+
+        ${filtered.length === 0 ? `<div class="empty-state">No patients found matching "${esc(state.patientSearchQuery)}".</div>` : `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>PATIENT ID</th>
+                <th>PATIENT</th>
+                <th>AGE / GENDER</th>
+                <th>PHONE</th>
+                <th>ADDRESS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filtered.map(p => `
+                <tr class="selectable ${selected && selected.id === p.id ? 'selected' : ''}" data-select-patient="${p.id}">
+                  <td style="color:var(--muted);">PT-${p.id}</td>
+                  <td style="font-weight:500;">${esc(p.name)}</td>
+                  <td>${p.age} yrs Â· ${esc(p.gender)}</td>
+                  <td>${esc(p.phone)}</td>
+                  <td>${esc(p.address)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `}
+        <span style="font-size:11px;color:var(--muted);">Showing ${filtered.length} of ${patients.length} patients</span>
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:20px;">
+        ${!selected ? `<div class="empty-state">Select a patient to view their profile summary.</div>` : `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:10px;font-weight:500;color:var(--muted);letter-spacing:0.6px;">PATIENT SUMMARY</span>
+            <span style="font-size:11px;font-weight:500;color:var(--primary);">Active</span>
+          </div>
+          <div>
+            <h2 style="font-size:24px;font-weight:600;color:var(--ink);">${esc(selected.name)}</h2>
+            <p style="font-size:12px;color:var(--muted);margin-top:6px;">PT-${selected.id} &nbsp;Â·&nbsp; ${recCount} medical ${recCount === 1 ? 'record' : 'records'}</p>
+          </div>
+          <div class="form-row-2">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-weight:500;">AGE</div>
+              <div style="font-size:13px;font-weight:500;margin-top:6px;">${selected.age} years</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-weight:500;">GENDER</div>
+              <div style="font-size:13px;font-weight:500;margin-top:6px;">${esc(selected.gender)}</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">PHONE</div>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">${esc(selected.phone)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">EMAIL</div>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">${esc(selected.email)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">HOME ADDRESS</div>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">${esc(selected.address)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-weight:500;">NEXT APPOINTMENT</div>
+            <div style="font-size:13px;font-weight:500;margin-top:6px;">
+              ${nextAppt ? `${esc(formatPrettyDate(nextAppt.date))}, ${esc(nextAppt.time)} Â· ${esc(nextAppt.reason)}` : 'No upcoming appointment'}
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:4px;">
+            <button class="btn-secondary" style="flex:1;" id="view-patient-records-btn" data-pid="${selected.id}">View records</button>
+            <button class="btn-primary" style="flex:1;" id="book-for-patient-btn" data-pid="${selected.id}">Book visit</button>
+          </div>
+        `}
+      </div>
+    </div>
+
+    <div class="banner-info">
+      <strong>Find the right patient, every time.</strong>
+      <span>Confirm the Patient ID and contact details before opening a medical record or booking a visit.</span>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 05 Â· PATIENT REGISTRATION
+// ============================================================
+
+function renderPatientRegisterScreen() {
+  const errKeys = Object.keys(state.regErrors);
+  const d = state.regDraft;
+  const e = state.regErrors;
+
+  return `
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Patient information</h3>
+          <span style="font-size:11px;color:var(--muted);">* Required fields</span>
+        </div>
+
+        ${errKeys.length > 0 ? `
+          <div class="banner-error">
+            <strong>Please check ${errKeys.length} ${errKeys.length === 1 ? 'field' : 'fields'} before continuing.</strong>
+            <span>Your entries are saved here. Correct the highlighted details below.</span>
+          </div>
+        ` : ''}
+
+        <form id="register-patient-form" style="display:flex;flex-direction:column;gap:16px;" novalidate>
+          <div class="field-group">
+            <label for="reg-name">Full name *</label>
+            <input id="reg-name" class="field-input ${e.name ? 'error' : ''}" type="text" value="${esc(d.name)}" placeholder="e.g. Bilal Ahmed" />
+            ${e.name ? `<span class="field-error-text">${esc(e.name)}</span>` : ''}
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="reg-age">Age (1â€“130) *</label>
+              <input id="reg-age" class="field-input ${e.age ? 'error' : ''}" type="number" min="1" max="130" value="${esc(d.age)}" placeholder="e.g. 28" />
+              ${e.age ? `<span class="field-error-text">${esc(e.age)}</span>` : ''}
+            </div>
+            <div class="field-group">
+              <label for="reg-gender">Gender *</label>
+              <select id="reg-gender" class="field-select ${e.gender ? 'error' : ''}">
+                <option value="Male" ${d.gender === 'Male' ? 'selected' : ''}>Male</option>
+                <option value="Female" ${d.gender === 'Female' ? 'selected' : ''}>Female</option>
+                <option value="Other" ${d.gender === 'Other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="reg-phone">Phone number *</label>
+              <input id="reg-phone" class="field-input ${e.phone ? 'error' : ''}" type="text" value="${esc(d.phone)}" placeholder="e.g. 03001234567" />
+              ${e.phone ? `<span class="field-error-text">${esc(e.phone)}</span>` : ''}
+            </div>
+            <div class="field-group">
+              <label for="reg-email">Email address *</label>
+              <input id="reg-email" class="field-input ${e.email ? 'error' : ''}" type="email" value="${esc(d.email)}" placeholder="patient@example.com" />
+              ${e.email ? `<span class="field-error-text">${esc(e.email)}</span>` : ''}
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="reg-address">Home address *</label>
+            <input id="reg-address" class="field-input ${e.address ? 'error' : ''}" type="text" value="${esc(d.address)}" placeholder="Street, City" />
+            ${e.address ? `<span class="field-error-text">${esc(e.address)}</span>` : ''}
+          </div>
+
+          <label class="checkbox-label" style="padding-top:4px;">
+            <input id="reg-consent" type="checkbox" ${d.consent ? 'checked' : ''} />
+            <span>Patient consent for registration and care has been recorded.</span>
+          </label>
+
+          <div style="display:flex;justify-content:flex-end;gap:14px;padding-top:6px;">
+            <button type="button" class="btn-secondary" data-nav="patient-search">Cancel</button>
+            <button type="submit" class="btn-primary">Register patient</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="split-right" style="display:flex;flex-direction:column;gap:20px;">
+        <div class="card" style="display:flex;flex-direction:column;gap:22px;">
+          <h3 style="font-size:17px;font-weight:600;color:var(--ink);">A smooth first visit</h3>
+          <div style="display:flex;gap:14px;">
+            <span style="font-size:12px;font-weight:600;color:var(--primary);">01</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;">Verify identity</div>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Confirm the patientâ€™s full name, age, and gender.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;">
+            <span style="font-size:12px;font-weight:600;color:var(--primary);">02</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;">Add contact details</div>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">Use a valid 10â€“15 digit phone number and unique email address.</p>
+            </div>
+          </div>
+          <div style="display:flex;gap:14px;">
+            <span style="font-size:12px;font-weight:600;color:var(--primary);">03</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;">Create patient profile</div>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-top:5px;">A unique Patient ID is automatically generated after registration.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner-info" style="padding:24px;">
+          <strong>Patient privacy comes first</strong>
+          <span style="line-height:1.6;">Only collect information needed for care. Access to patient details is restricted by staff role.</span>
+        </div>
+
+        <button class="link-btn" style="text-align:left;" data-nav="patient-search">Already registered? &nbsp;Search patients â†’</button>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 06 Â· APPOINTMENT BOOKING
+// ============================================================
+
+function buildCalendarDays(year, month) {
+  const firstDay = new Date(year, month, 1);
+  // Monday=0 .. Sunday=6
+  let startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+
+  const cells = [];
+  for (let i = startOffset - 1; i >= 0; i--) {
+    cells.push({ day: prevMonthDays - i, outside: true });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, outside: false });
+  }
+  let nextDay = 1;
+  while (cells.length % 7 !== 0) {
+    cells.push({ day: nextDay++, outside: true });
+  }
+  return cells;
+}
+
+function renderAppointmentBookingScreen() {
+  const { patients, doctors, appointments } = state.data;
+  const selPatient = getPatient(state.bookingPatientId);
+  const selDoctor = getDoctor(state.bookingDoctorId);
+  const dateStr = selectedBookingDateStr();
+
+  const bookedSlots = new Set(
+    appointments
+      .filter(a => a.doctorId === Number(state.bookingDoctorId) && a.date === dateStr)
+      .map(a => a.time)
+  );
+
+  // If currently selected time is booked, auto-select next available
+  if (bookedSlots.has(state.bookingTime)) {
+    state.bookingConflictSlot = state.bookingTime;
+    const alt = TIME_SLOTS.find(t => !bookedSlots.has(t));
+    if (alt) state.bookingTime = alt;
+  }
+
+  const calCells = buildCalendarDays(state.calYear, state.calMonth);
+
+  return `
+    <div class="booking-steps">
+      <span class="booking-step-active">01 &nbsp;Patient &amp; doctor</span>
+      <span style="color:#a4b6af;">â†’</span>
+      <span class="booking-step-active">02 &nbsp;Date &amp; time</span>
+      <span style="color:#a4b6af;">â†’</span>
+      <span class="booking-step-muted">03 &nbsp;Confirm booking</span>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:20px;">
+        <h3 style="font-size:18px;font-weight:600;color:var(--ink);">Appointment details</h3>
+
+        <div class="field-group">
+          <label for="book-patient">Patient *</label>
+          <select id="book-patient" class="field-select">
+            ${patients.length === 0 ? `<option value="">No patients registered yet</option>` : patients.map(p => `
+              <option value="${p.id}" ${p.id === Number(state.bookingPatientId) ? 'selected' : ''}>
+                ${esc(p.name)} Â· PT-${p.id} Â· ${p.age} yrs (${esc(p.gender)})
+              </option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="book-doctor">Doctor *</label>
+            <select id="book-doctor" class="field-select">
+              ${doctors.length === 0 ? `<option value="">No doctors added yet</option>` : doctors.map(d => `
+                <option value="${d.id}" ${d.id === Number(state.bookingDoctorId) ? 'selected' : ''}>
+                  Dr. ${esc(d.name)} Â· ${esc(d.specialization)}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="book-reason">Reason for visit *</label>
+            <input id="book-reason" class="field-input" type="text" value="${esc(state.bookingReason)}" placeholder="e.g. Follow-up, Consultation" />
+          </div>
+        </div>
+
+        ${(patients.length === 0 || doctors.length === 0) ? `
+          <div class="banner-warn">
+            <div class="banner-warn-col">
+              <strong>Add at least one patient and one doctor before booking.</strong>
+              <span>Use the quick buttons to register a patient or add a doctor first.</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              ${patients.length === 0 ? `<button type="button" class="btn-secondary" data-nav="patient-register">+ Register patient</button>` : ''}
+              ${doctors.length === 0 ? `<button type="button" class="btn-secondary" data-nav="doctors">+ Add doctor</button>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="calendar-time-grid">
+          <div class="calendar-box">
+            <div class="calendar-header">
+              <h4>${MONTHS[state.calMonth]} ${state.calYear}</h4>
+              <div class="cal-nav">
+                <button type="button" id="cal-prev">â€¹</button>
+                <button type="button" id="cal-next">â€º</button>
+              </div>
+            </div>
+            <div class="cal-grid">
+              ${WEEKDAYS.map(w => `<div class="cal-weekday">${w}</div>`).join('')}
+              ${calCells.map(c => `
+                <button type="button" class="cal-day ${c.outside ? 'outside' : ''} ${!c.outside && c.day === state.calDay ? 'selected' : ''}"
+                        ${c.outside ? 'disabled' : `data-cal-day="${c.day}"`}>${c.day}</button>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="slots-box">
+            <div style="font-size:14px;font-weight:600;color:var(--ink);">${formatPrettyDate(dateStr)}</div>
+            <div style="font-size:11px;color:var(--muted);">Available 30-minute slots</div>
+            <div class="slots-grid">
+              ${TIME_SLOTS.map(slot => {
+                const isBooked = bookedSlots.has(slot);
+                const isSel = !isBooked && state.bookingTime === slot;
+                return `
+                  <button type="button" class="slot-btn ${isBooked ? 'booked' : ''} ${isSel ? 'selected' : ''}"
+                          ${isBooked ? 'disabled' : `data-time-slot="${slot}"`}>${slot}</button>
+                `;
+              }).join('')}
+            </div>
+            <span style="font-size:10px;color:var(--muted);">Strikethrough slots are already booked for this doctor.</span>
+          </div>
+        </div>
+
+        ${bookedSlots.size > 0 ? `
+          <div class="banner-warn">
+            <div class="banner-warn-col">
+              <strong>${[...bookedSlots].join(', ')} already booked for Dr. ${esc(selDoctor?.name || '')} on ${formatPrettyDate(dateStr)}.</strong>
+              <span>${esc(state.bookingTime)} is selected instead. Confirm to reserve this time.</span>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:18px;">
+        <h3 style="font-size:19px;font-weight:600;color:var(--ink);">Visit summary</h3>
+        <div>
+          <div style="font-size:21px;font-weight:600;color:var(--ink);">${esc(selPatient?.name || 'Select a patient')}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+            ${selPatient ? `PT-${selPatient.id} Â· ${esc(selPatient.gender)}, ${selPatient.age} years` : 'No patient registered'}
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="summary-kv"><span class="k">Doctor</span><span class="v">${selDoctor ? 'Dr. ' + esc(selDoctor.name) : 'â€”'}</span></div>
+        <div class="summary-kv"><span class="k">Specialty</span><span class="v">${esc(selDoctor?.specialization || 'â€”')}</span></div>
+        <div class="summary-kv"><span class="k">Date</span><span class="v">${formatPrettyDate(dateStr)}</span></div>
+        <div class="summary-kv"><span class="k">Time</span><span class="v">${esc(state.bookingTime)}</span></div>
+        <div class="summary-kv"><span class="k">Reason</span><span class="v" id="summary-reason">${esc(state.bookingReason)}</span></div>
+        <div class="divider"></div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;">
+          Double-booking protection is active. The slot is reserved immediately once confirmed.
+        </p>
+        <button type="button" class="btn-primary btn-full" id="confirm-booking-btn" ${(!selPatient || !selDoctor) ? 'disabled' : ''}>
+          Confirm appointment
+        </button>
+        <span style="font-size:10px;color:var(--muted);">The time is not reserved until confirmed.</span>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// SCREEN 07 Â· APPOINTMENT CANCELLATION
+// ============================================================
+
+function renderAppointmentCancelScreen() {
+  const { appointments, cancelledAppointments } = state.data;
+  const tab = state.cancelTab;
+
+  let list = [];
+  if (tab === 'upcoming') {
+    list = appointments.filter(a => a.status !== 'Completed');
+  } else if (tab === 'completed') {
+    list = appointments.filter(a => a.status === 'Completed');
+  } else {
+    list = cancelledAppointments;
+  }
+
+  let selected = tab !== 'cancelled'
+    ? (list.find(a => a.id === state.selectedCancelApptId) || list[0] || null)
+    : null;
+  if (selected) state.selectedCancelApptId = selected.id;
+
+  const selPatient = selected ? getPatient(selected.patientId) : null;
+  const selDoctor = selected ? getDoctor(selected.doctorId) : null;
+
+  return `
+    <div class="controls-row">
+      <div class="role-tabs" style="border:none;">
+        <button class="role-tab ${tab === 'upcoming' ? 'active' : ''}" data-cancel-tab="upcoming">Upcoming (${appointments.filter(a => a.status !== 'Completed').length})</button>
+        <button class="role-tab ${tab === 'completed' ? 'active' : ''}" data-cancel-tab="completed">Completed (${appointments.filter(a => a.status === 'Completed').length})</button>
+        <button class="role-tab ${tab === 'cancelled' ? 'active' : ''}" data-cancel-tab="cancelled">Cancelled (${cancelledAppointments.length})</button>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <button class="btn-primary" data-nav="appt-book">+ Book appointment</button>
+      </div>
+    </div>
+
+    <div class="split-layout">
+      <div class="card split-left" style="display:flex;flex-direction:column;gap:12px;">
+        <h3 style="font-size:18px;font-weight:600;color:var(--ink);">
+          ${tab === 'upcoming' ? 'Upcoming appointments' : tab === 'completed' ? 'Completed visits' : 'Cancelled appointments'}
+        </h3>
+        <p style="font-size:12px;color:var(--muted);margin-top:-4px;">${list.length} ${list.length === 1 ? 'appointment' : 'appointments'} Â· Main clinic</p>
+
+        ${list.length === 0 ? `<div class="empty-state">No appointments in this category.</div>` : list.map(a => {
+          const p = getPatient(a.patientId);
+          const d = getDoctor(a.doctorId);
+          const isSel = selected && selected.id === a.id;
+          return `
+            <div class="visit-row ${isSel ? 'selected' : ''}" ${tab !== 'cancelled' ? `data-select-cancel="${a.id}"` : ''}>
+              <div style="width:105px;">
+                <div style="font-size:12px;font-weight:500;">${esc(a.time)}</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:4px;">${esc(formatPrettyDate(a.date))}</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:500;">${esc(p ? p.name : 'Patient #' + a.patientId)}</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+                  Dr. ${esc(d ? d.name : '#' + a.doctorId)} Â· ${esc(a.reason)}
+                  ${tab === 'cancelled' && a.cancelReason ? ` Â· Reason: ${esc(a.cancelReason)}` : ''}
+                </div>
+              </div>
+              <span style="font-size:11px;font-weight:500;color:${tab === 'cancelled' ? 'var(--cancel-ink)' : 'var(--primary)'};">
+                ${isSel ? 'Selected' : (tab === 'cancelled' ? 'Cancelled' : esc(a.status))}
+              </span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="card split-right" style="display:flex;flex-direction:column;gap:16px;">
+        <span style="font-size:10px;font-weight:600;color:var(--danger);letter-spacing:1px;">CANCELLATION REVIEW</span>
+        <h3 style="font-size:22px;font-weight:600;color:var(--ink);">Cancel this appointment?</h3>
+        <p style="font-size:12px;color:var(--muted);line-height:1.6;">
+          The time slot will become available to other patients immediately after cancellation.
+        </p>
+
+        ${!selected ? `<div class="empty-state">Select an upcoming appointment from the list to review cancellation.</div>` : `
+          <div style="background:var(--bg-canvas);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:18px;font-weight:600;color:var(--ink);">${esc(selPatient ? selPatient.name : 'Patient #' + selected.patientId)}</div>
+            <div style="font-size:11px;color:var(--muted);">APT-${selected.id} Â· PT-${selected.patientId}</div>
+            <div style="font-size:12px;color:var(--ink);">${esc(formatPrettyDate(selected.date))} Â· ${esc(selected.time)}</div>
+            <div style="font-size:12px;color:var(--muted);">Dr. ${esc(selDoctor ? selDoctor.name : '#' + selected.doctorId)} Â· ${esc(selected.reason)}</div>
+          </div>
+
+          <div class="field-group">
