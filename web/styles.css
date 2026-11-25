@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg-canvas: #f5f8f7;
   --bg-sidebar: #143e3a;
   --bg-sidebar-active: #286056;
@@ -56,7 +56,7 @@ button, input, select, textarea {
 }
 
 /* ============================================================
-   SCREEN 01 Â· LOGIN COMPOSITION
+   SCREEN 01 · LOGIN COMPOSITION
    ============================================================ */
 .login-shell {
   display: flex;
@@ -736,4 +736,608 @@ button, input, select, textarea {
 .split-right {
   flex: 0 0 38%;
   min-width: 340px;
+}
+
+.split-left-narrow {
+  flex: 0 0 37%;
+  min-width: 340px;
+}
+
+.split-right-wide {
+  flex: 1 1 63%;
+  min-width: 0;
+}
+
+/* Badges & Pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 25px;
+  padding: 0 11px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pill-green {
+  background: #e9f3ed;
+  color: var(--primary);
+}
+
+.pill-amber {
+  background: var(--bg-warn-pill);
+  color: var(--warn-pill-ink);
+}
+
+.pill-red {
+  background: var(--bg-cancel-pill);
+  color: var(--cancel-ink);
+}
+
+/* Banners */
+.banner-error {
+  background: var(--bg-error);
+  border-radius: 8px;
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--error-ink);
+  width: 100%;
+}
+
+.banner-error strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.banner-error span {
+  font-size: 11px;
+}
+
+.banner-warn {
+  background: var(--bg-warn);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--warn-ink);
+  width: 100%;
+}
+
+.banner-warn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.banner-warn strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.banner-warn span {
+  font-size: 11px;
+  color: var(--warn-ink-dark);
+}
+
+.banner-info {
+  background: var(--bg-soft-info);
+  border-radius: 12px;
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.banner-info strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.banner-info span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   SCREEN 02 · SYSTEM STATISTICS
+   ============================================================ */
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.eyebrow-date {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.kpi-sub {
+  font-size: 11px;
+  color: var(--primary);
+}
+
+.charts-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.chart-weekly {
+  flex: 1 1 65%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 300px;
+}
+
+.chart-glance {
+  flex: 1 1 35%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 300px;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 200px;
+  padding-top: 16px;
+  gap: 12px;
+}
+
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 1;
+  height: 100%;
+}
+
+.bar-val, .bar-day {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.bar-fill {
+  width: 46px;
+  border-radius: 5px;
+  background: var(--bar-inactive);
+  transition: height 0.25s ease;
+}
+
+.bar-fill.active {
+  background: var(--primary);
+}
+
+.progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.progress-track {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--progress-track);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary);
+}
+
+.progress-bar.warn {
+  background: var(--progress-warn);
+}
+
+.progress-bar.muted {
+  background: var(--progress-cancel);
+}
+
+/* Tables */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  background: var(--bg-canvas);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  text-align: left;
+  padding: 10px 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  padding: 14px 12px;
+  font-size: 12px;
+  color: var(--ink);
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr.selectable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.data-table tbody tr.selectable:hover {
+  background: #f8fbf9;
+}
+
+.data-table tbody tr.selected {
+  background: var(--bg-soft-mint);
+}
+
+/* ============================================================
+   SCREEN 06 · BOOKING CALENDAR & SLOTS
+   ============================================================ */
+.booking-steps {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 12px;
+}
+
+.booking-step-active {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.booking-step-muted {
+  color: var(--muted);
+}
+
+.calendar-time-grid {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.calendar-box {
+  width: 368px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.calendar-header h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cal-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.cal-nav button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-input);
+  background: #ffffff;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+.cal-day {
+  height: 38px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.cal-day:hover {
+  background: var(--bg-soft-mint);
+}
+
+.cal-day.outside {
+  color: #b9c5c0;
+}
+
+.cal-day.selected {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.slots-box {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.slot-btn {
+  height: 40px;
+  border-radius: 7px;
+  border: 1px solid var(--border-input);
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.slot-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.slot-btn.selected {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.slot-btn.booked {
+  background: var(--bg-disabled);
+  color: #adbab4;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   LIST ITEMS (SCREENS 07, 08, 12)
+   ============================================================ */
+.visit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.12s;
+}
+
+.visit-row:hover {
+  background: #f8fbf9;
+}
+
+.visit-row.selected {
+  background: var(--bg-soft-mint);
+}
+
+.summary-kv {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 12px;
+}
+
+.summary-kv .k {
+  color: var(--muted);
+}
+
+.summary-kv .v {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ============================================================
+   SCREEN 08 · DOCTOR METRICS
+   ============================================================ */
+.doctor-summary-strip {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.doctor-greeting-card {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.doctor-metric-card {
+  width: 132px;
+  background: #ffffff;
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.doctor-metric-card strong {
+  font-size: 25px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.doctor-metric-card span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   TOASTS & MODAL
+   ============================================================ */
+.toast-container {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: var(--bg-sidebar);
+  color: #ffffff;
+  padding: 13px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(20, 62, 58, 0.22);
+  animation: fadeSlideUp 0.2s ease;
+}
+
+.toast.error {
+  background: var(--danger);
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 62, 58, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  padding: 24px;
+}
+
+.modal-box {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--border-card);
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-card);
+  width: 100%;
+}
+
+.empty-state {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media print {
+  .sidebar, .top-bar, .page-heading-row, .no-print {
+    display: none !important;
+  }
+  .page-content {
+    padding: 0 !important;
+  }
+  .card {
+    border: none !important;
+  }
+}
+
+@media (max-width: 1120px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .split-layout, .charts-row, .doctor-summary-strip { flex-direction: column; }
+  .split-right, .split-left-narrow { width: 100%; min-width: 0; }
+  .login-brand-panel { display: none; }
 }
