@@ -1,6 +1,9 @@
 # Compiled Java classes
 *.class
 
+# Local runtime persistence file
+clinic_data.txt
+
 # OS & IDE files
 .DS_Store
 Thumbs.db

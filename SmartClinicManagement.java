@@ -1244,8 +1244,9 @@ public class SmartClinicManagement {
     // ============================================================
 
     static void loadSampleData() {
-        // System starts empty so users can add doctors, patients,
-        // appointments, medical records, prescriptions, and bills themselves.
+        // Load previously saved clinic data from disk if available;
+        // otherwise start completely empty so users can add their own records.
+        loadDataFromDisk();
     }
 
     // ============================================================
@@ -1337,12 +1338,15 @@ public class SmartClinicManagement {
                     sendJson(out, 200, buildStateJson());
                 } else if ("/api/login/admin".equals(path)) {
                     handleAdminLoginApi(method, reqBody, out);
+                } else if ("/api/login/reset".equals(path)) {
+                    adminFailedAttempts = 0;
+                    sendJson(out, 200, "{\"ok\":true}");
                 } else if ("/api/login/doctor".equals(path)) {
                     handleDoctorLoginApi(method, reqBody, out);
                 } else if ("/api/doctors".equals(path) || path.startsWith("/api/doctors/")) {
                     handleDoctorsApi(method, path, reqBody, out);
                 } else if ("/api/patients".equals(path) || path.startsWith("/api/patients/")) {
-                    handlePatientsApi(method, reqBody, out);
+                    handlePatientsApi(method, path, reqBody, out);
                 } else if ("/api/appointments/status".equals(path)) {
                     handleAppointmentStatusApi(method, reqBody, out);
                 } else if ("/api/appointments".equals(path) || path.startsWith("/api/appointments/")) {
@@ -1503,7 +1507,50 @@ public class SmartClinicManagement {
             }
             Doctor doctor = new Doctor(doctorIdCounter++, name, email, phone, specialization, qualification);
             doctors.add(doctor);
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"doctor\":" + doctorToJson(doctor) + "}");
+            return;
+        }
+        if ("PUT".equalsIgnoreCase(method)) {
+            int id = extractTrailingId(path);
+            Doctor doctor = findDoctorById(id);
+            if (doctor == null) {
+                sendJson(out, 404, "{\"error\":\"Doctor not found with ID " + id + ".\"}");
+                return;
+            }
+            Map<String, String> body = parseJsonObject(reqBody);
+            String name = safeStr(body.get("name")).trim();
+            String email = safeStr(body.get("email")).trim();
+            String phone = safeStr(body.get("phone")).trim();
+            String specialization = safeStr(body.get("specialization")).trim();
+            String qualification = safeStr(body.get("qualification")).trim();
+
+            if (name.isEmpty() || email.isEmpty() || phone.isEmpty()
+                    || specialization.isEmpty() || qualification.isEmpty()) {
+                sendJson(out, 400, "{\"error\":\"All doctor fields are required.\"}");
+                return;
+            }
+            if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                sendJson(out, 400, "{\"error\":\"'" + escapeJson(email) + "' is not a valid email address.\"}");
+                return;
+            }
+            String digits = phone.replaceAll("[\\s\\-\\+\\(\\)]", "");
+            if (!digits.matches("\\d{10,15}")) {
+                sendJson(out, 400, "{\"error\":\"Phone number must contain 10 to 15 digits.\"}");
+                return;
+            }
+            Doctor existing = findDoctorByEmail(email);
+            if (existing != null && existing.getId() != id) {
+                sendJson(out, 409, "{\"error\":\"Another doctor already uses email " + escapeJson(email) + ".\"}");
+                return;
+            }
+            setFieldValue(doctor, "name", name);
+            setFieldValue(doctor, "email", email);
+            setFieldValue(doctor, "phone", phone);
+            setFieldValue(doctor, "specialization", specialization);
+            setFieldValue(doctor, "qualification", qualification);
+            saveDataToDisk();
+            sendJson(out, 200, "{\"ok\":true,\"doctor\":" + doctorToJson(doctor) + "}");
             return;
         }
         if ("DELETE".equalsIgnoreCase(method)) {
@@ -1514,13 +1561,14 @@ public class SmartClinicManagement {
                 return;
             }
             doctors.remove(doctor);
+            saveDataToDisk();
             sendJson(out, 200, "{\"ok\":true,\"deletedId\":" + id + "}");
             return;
         }
         sendJson(out, 405, "{\"error\":\"Method not allowed\"}");
     }
 
-    static void handlePatientsApi(String method, String reqBody, OutputStream out) throws IOException {
+    static void handlePatientsApi(String method, String path, String reqBody, OutputStream out) throws IOException {
         if ("GET".equalsIgnoreCase(method)) {
             sendJson(out, 200, patientsListJson());
             return;
@@ -1571,7 +1619,77 @@ public class SmartClinicManagement {
                     : ("Female".equalsIgnoreCase(gender) ? "Female" : "Other");
             Patient patient = new Patient(patientIdCounter++, name, email, phone, age, normalizedGender, address);
             patients.add(patient);
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"patient\":" + patientToJson(patient) + "}");
+            return;
+        }
+        if ("PUT".equalsIgnoreCase(method)) {
+            int id = extractTrailingId(path);
+            Patient patient = findPatientById(id);
+            if (patient == null) {
+                sendJson(out, 404, "{\"error\":\"Patient not found with ID " + id + ".\"}");
+                return;
+            }
+            Map<String, String> body = parseJsonObject(reqBody);
+            String name = safeStr(body.get("name")).trim();
+            String email = safeStr(body.get("email")).trim();
+            String phone = safeStr(body.get("phone")).trim();
+            String ageRaw = safeStr(body.get("age")).trim();
+            String gender = safeStr(body.get("gender")).trim();
+            String address = safeStr(body.get("address")).trim();
+
+            if (name.isEmpty() || email.isEmpty() || phone.isEmpty()
+                    || ageRaw.isEmpty() || gender.isEmpty() || address.isEmpty()) {
+                sendJson(out, 400, "{\"error\":\"All required patient fields must be filled.\"}");
+                return;
+            }
+            if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                sendJson(out, 400, "{\"error\":\"Please enter a valid email address.\"}");
+                return;
+            }
+            String digits = phone.replaceAll("[\\s\\-\\+\\(\\)]", "");
+            if (!digits.matches("\\d{10,15}")) {
+                sendJson(out, 400, "{\"error\":\"Enter a valid phone number (10 to 15 digits).\"}");
+                return;
+            }
+            int age;
+            try {
+                age = Integer.parseInt(ageRaw);
+                if (age < 1 || age > 130) {
+                    sendJson(out, 400, "{\"error\":\"Age must be between 1 and 130.\"}");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                sendJson(out, 400, "{\"error\":\"Age must be a valid number.\"}");
+                return;
+            }
+            Patient existing = findPatientByEmail(email);
+            if (existing != null && existing.getId() != id) {
+                sendJson(out, 409, "{\"error\":\"Another patient already uses email " + escapeJson(email) + ".\"}");
+                return;
+            }
+            String normalizedGender = "Male".equalsIgnoreCase(gender) ? "Male"
+                    : ("Female".equalsIgnoreCase(gender) ? "Female" : "Other");
+            setFieldValue(patient, "name", name);
+            setFieldValue(patient, "email", email);
+            setFieldValue(patient, "phone", phone);
+            setFieldValue(patient, "age", age);
+            setFieldValue(patient, "gender", normalizedGender);
+            setFieldValue(patient, "address", address);
+            saveDataToDisk();
+            sendJson(out, 200, "{\"ok\":true,\"patient\":" + patientToJson(patient) + "}");
+            return;
+        }
+        if ("DELETE".equalsIgnoreCase(method)) {
+            int id = extractTrailingId(path);
+            Patient patient = findPatientById(id);
+            if (patient == null) {
+                sendJson(out, 404, "{\"error\":\"Patient not found with ID " + id + ".\"}");
+                return;
+            }
+            patients.remove(patient);
+            saveDataToDisk();
+            sendJson(out, 200, "{\"ok\":true,\"deletedId\":" + id + "}");
             return;
         }
         sendJson(out, 405, "{\"error\":\"Method not allowed\"}");
@@ -1626,7 +1744,60 @@ public class SmartClinicManagement {
             Appointment appointment = new Appointment(appointmentIdCounter++, patientId, doctorId, date, time, reason);
             appointments.add(appointment);
             appointmentStatuses.put(appointment.getId(), "Confirmed");
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"appointment\":" + appointmentToJson(appointment) + "}");
+            return;
+        }
+        if ("PUT".equalsIgnoreCase(method)) {
+            int id = extractTrailingId(path);
+            Appointment appointment = findAppointmentById(id);
+            if (appointment == null) {
+                sendJson(out, 404, "{\"error\":\"Appointment not found with ID " + id + ".\"}");
+                return;
+            }
+            Map<String, String> body = parseJsonObject(reqBody);
+            String date = safeStr(body.get("date")).trim();
+            String time = safeStr(body.get("time")).trim();
+            String reason = safeStr(body.get("reason")).trim();
+            int doctorId = appointment.getDoctorId();
+            String docIdRaw = safeStr(body.get("doctorId")).trim();
+            if (!docIdRaw.isEmpty()) {
+                try {
+                    doctorId = Integer.parseInt(docIdRaw);
+                } catch (NumberFormatException e) {
+                    sendJson(out, 400, "{\"error\":\"Invalid Doctor ID.\"}");
+                    return;
+                }
+            }
+            Doctor doctor = findDoctorById(doctorId);
+            if (doctor == null) {
+                sendJson(out, 404, "{\"error\":\"Doctor not found with ID " + doctorId + ".\"}");
+                return;
+            }
+            if (!date.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-((19|20)\\d{2})$")) {
+                sendJson(out, 400, "{\"error\":\"Date must be in dd-MM-yyyy format.\"}");
+                return;
+            }
+            if (time.isEmpty() || reason.isEmpty()) {
+                sendJson(out, 400, "{\"error\":\"Time and reason for visit are required.\"}");
+                return;
+            }
+            for (Appointment a : appointments) {
+                if (a.getId() != id && a.getDoctorId() == doctorId
+                        && a.getDate().equalsIgnoreCase(date)
+                        && a.getTime().equalsIgnoreCase(time)) {
+                    sendJson(out, 409, "{\"error\":\"Dr. " + escapeJson(doctor.getName())
+                            + " already has an appointment on " + escapeJson(date)
+                            + " at " + escapeJson(time) + ".\"}");
+                    return;
+                }
+            }
+            setFieldValue(appointment, "doctorId", doctorId);
+            setFieldValue(appointment, "date", date);
+            setFieldValue(appointment, "time", time);
+            setFieldValue(appointment, "reason", reason);
+            saveDataToDisk();
+            sendJson(out, 200, "{\"ok\":true,\"appointment\":" + appointmentToJson(appointment) + "}");
             return;
         }
         if ("DELETE".equalsIgnoreCase(method)) {
@@ -1653,6 +1824,7 @@ public class SmartClinicManagement {
             cancelledAppointmentsLog.add(snap);
             appointments.remove(appointment);
             appointmentStatuses.remove(id);
+            saveDataToDisk();
             sendJson(out, 200, "{\"ok\":true,\"cancelledId\":" + id + "}");
             return;
         }
@@ -1681,6 +1853,7 @@ public class SmartClinicManagement {
             status = "Confirmed";
         }
         appointmentStatuses.put(id, status);
+        saveDataToDisk();
         sendJson(out, 200, "{\"ok\":true,\"id\":" + id + ",\"status\":" + jsonStr(status) + "}");
     }
 
@@ -1716,6 +1889,7 @@ public class SmartClinicManagement {
             }
             MedicalRecord record = new MedicalRecord(recordIdCounter++, patientId, doctorId, diagnosis, symptoms, notes);
             medicalRecords.add(record);
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"record\":" + recordToJson(record) + "}");
             return;
         }
@@ -1755,6 +1929,7 @@ public class SmartClinicManagement {
             }
             Prescription p = new Prescription(prescriptionIdCounter++, patientId, doctorId, medicine, dosage, duration, instructions);
             prescriptions.add(p);
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"prescription\":" + prescriptionToJson(p) + "}");
             return;
         }
@@ -1795,6 +1970,7 @@ public class SmartClinicManagement {
             if ("paid".equalsIgnoreCase(safeStr(body.get("status")).trim())) {
                 paidBillIds.add(id);
             }
+            saveDataToDisk();
             sendJson(out, 201, "{\"ok\":true,\"bill\":" + billToJson(bill) + "}");
             return;
         }
@@ -1815,6 +1991,7 @@ public class SmartClinicManagement {
             return;
         }
         paidBillIds.add(id);
+        saveDataToDisk();
         sendJson(out, 200, "{\"ok\":true,\"id\":" + id + ",\"paid\":true}");
     }
 
@@ -1834,6 +2011,145 @@ public class SmartClinicManagement {
             }
         }
         return "";
+    }
+
+    static void setFieldValue(Object target, String fieldName, Object value) {
+        Class<?> cls = target.getClass();
+        while (cls != null) {
+            try {
+                Field f = cls.getDeclaredField(fieldName);
+                f.setAccessible(true);
+                f.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                cls = cls.getSuperclass();
+            } catch (IllegalAccessException e) {
+                return;
+            }
+        }
+    }
+
+    static String encodeTab(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "");
+    }
+
+    static String decodeTab(String s) {
+        if (s == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\' && i + 1 < s.length()) {
+                char n = s.charAt(i + 1);
+                if (n == 't') sb.append('\t');
+                else if (n == 'n') sb.append('\n');
+                else if (n == '\\') sb.append('\\');
+                else sb.append(n);
+                i++;
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
+    static void saveDataToDisk() {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("COUNTERS\t").append(patientIdCounter).append("\t").append(doctorIdCounter)
+              .append("\t").append(appointmentIdCounter).append("\t").append(prescriptionIdCounter)
+              .append("\t").append(recordIdCounter).append("\t").append(billIdCounter).append("\n");
+            for (Doctor d : doctors) {
+                sb.append("DOC\t").append(d.getId()).append("\t").append(encodeTab(d.getName()))
+                  .append("\t").append(encodeTab(d.getEmail())).append("\t").append(encodeTab(d.getPhone()))
+                  .append("\t").append(encodeTab(d.getSpecialization())).append("\t").append(encodeTab(d.getQualification())).append("\n");
+            }
+            for (Patient p : patients) {
+                sb.append("PAT\t").append(p.getId()).append("\t").append(encodeTab(p.getName()))
+                  .append("\t").append(encodeTab(p.getEmail())).append("\t").append(encodeTab(p.getPhone()))
+                  .append("\t").append(getFieldValue(p, "age")).append("\t").append(encodeTab(String.valueOf(getFieldValue(p, "gender"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(p, "address")))).append("\n");
+            }
+            for (Appointment a : appointments) {
+                sb.append("APT\t").append(a.getId()).append("\t").append(a.getPatientId())
+                  .append("\t").append(a.getDoctorId()).append("\t").append(encodeTab(a.getDate()))
+                  .append("\t").append(encodeTab(a.getTime())).append("\t").append(encodeTab(String.valueOf(getFieldValue(a, "reason"))))
+                  .append("\t").append(encodeTab(appointmentStatuses.getOrDefault(a.getId(), "Confirmed"))).append("\n");
+            }
+            for (MedicalRecord r : medicalRecords) {
+                sb.append("REC\t").append(getFieldValue(r, "id")).append("\t").append(r.getPatientId())
+                  .append("\t").append(getFieldValue(r, "doctorId")).append("\t").append(encodeTab(String.valueOf(getFieldValue(r, "diagnosis"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(r, "symptoms"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(r, "notes")))).append("\n");
+            }
+            for (Prescription rx : prescriptions) {
+                sb.append("RX\t").append(getFieldValue(rx, "id")).append("\t").append(getFieldValue(rx, "patientId"))
+                  .append("\t").append(getFieldValue(rx, "doctorId")).append("\t").append(encodeTab(String.valueOf(getFieldValue(rx, "medicine"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(rx, "dosage"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(rx, "duration"))))
+                  .append("\t").append(encodeTab(String.valueOf(getFieldValue(rx, "instructions")))).append("\n");
+            }
+            for (Bill b : bills) {
+                int id = ((Number) getFieldValue(b, "id")).intValue();
+                sb.append("BILL\t").append(id).append("\t").append(getFieldValue(b, "patientId"))
+                  .append("\t").append(getFieldValue(b, "consultationFee")).append("\t").append(getFieldValue(b, "medicineFee"))
+                  .append("\t").append(getFieldValue(b, "testFee")).append("\t").append(b.getTotal())
+                  .append("\t").append(paidBillIds.contains(id)).append("\n");
+            }
+            for (String snap : cancelledAppointmentsLog) {
+                sb.append("CANCEL\t").append(encodeTab(snap)).append("\n");
+            }
+            Files.write(Paths.get("clinic_data.txt"), sb.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ignored) {
+        }
+    }
+
+    static void loadDataFromDisk() {
+        Path p = Paths.get("clinic_data.txt");
+        if (!Files.exists(p)) return;
+        try {
+            List<String> lines = Files.readAllLines(p, StandardCharsets.UTF_8);
+            for (String line : lines) {
+                if (line.isEmpty()) continue;
+                String[] parts = line.split("\t", -1);
+                String type = parts[0];
+                if ("COUNTERS".equals(type) && parts.length >= 7) {
+                    patientIdCounter = Integer.parseInt(parts[1]);
+                    doctorIdCounter = Integer.parseInt(parts[2]);
+                    appointmentIdCounter = Integer.parseInt(parts[3]);
+                    prescriptionIdCounter = Integer.parseInt(parts[4]);
+                    recordIdCounter = Integer.parseInt(parts[5]);
+                    billIdCounter = Integer.parseInt(parts[6]);
+                } else if ("DOC".equals(type) && parts.length >= 7) {
+                    doctors.add(new Doctor(Integer.parseInt(parts[1]), decodeTab(parts[2]),
+                            decodeTab(parts[3]), decodeTab(parts[4]), decodeTab(parts[5]), decodeTab(parts[6])));
+                } else if ("PAT".equals(type) && parts.length >= 8) {
+                    patients.add(new Patient(Integer.parseInt(parts[1]), decodeTab(parts[2]),
+                            decodeTab(parts[3]), decodeTab(parts[4]), Integer.parseInt(parts[5]),
+                            decodeTab(parts[6]), decodeTab(parts[7])));
+                } else if ("APT".equals(type) && parts.length >= 8) {
+                    int id = Integer.parseInt(parts[1]);
+                    appointments.add(new Appointment(id, Integer.parseInt(parts[2]),
+                            Integer.parseInt(parts[3]), decodeTab(parts[4]), decodeTab(parts[5]), decodeTab(parts[6])));
+                    appointmentStatuses.put(id, decodeTab(parts[7]));
+                } else if ("REC".equals(type) && parts.length >= 7) {
+                    medicalRecords.add(new MedicalRecord(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]),
+                            Integer.parseInt(parts[3]), decodeTab(parts[4]), decodeTab(parts[5]), decodeTab(parts[6])));
+                } else if ("RX".equals(type) && parts.length >= 8) {
+                    prescriptions.add(new Prescription(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]),
+                            Integer.parseInt(parts[3]), decodeTab(parts[4]), decodeTab(parts[5]),
+                            decodeTab(parts[6]), decodeTab(parts[7])));
+                } else if ("BILL".equals(type) && parts.length >= 8) {
+                    int id = Integer.parseInt(parts[1]);
+                    bills.add(new Bill(id, Integer.parseInt(parts[2]), Double.parseDouble(parts[3]),
+                            Double.parseDouble(parts[4]), Double.parseDouble(parts[5]), Double.parseDouble(parts[6])));
+                    if ("true".equalsIgnoreCase(parts[7])) paidBillIds.add(id);
+                } else if ("CANCEL".equals(type) && parts.length >= 2) {
+                    cancelledAppointmentsLog.add(decodeTab(parts[1]));
+                }
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     static String buildStateJson() {
@@ -2085,7 +2401,7 @@ public class SmartClinicManagement {
     static void sendOptions(OutputStream out) throws IOException {
         String headers = "HTTP/1.1 204 No Content\r\n"
                 + "Access-Control-Allow-Origin: *\r\n"
-                + "Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS\r\n"
+                + "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n"
                 + "Access-Control-Allow-Headers: Content-Type\r\n"
                 + "Content-Length: 0\r\n"
                 + "Connection: close\r\n\r\n";
